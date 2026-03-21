@@ -6,8 +6,6 @@ const teal    = "#2E7273";
 const gold    = "#D08A2A";
 const cream   = "#f5ead0";
 const beige   = "#f5ede0";
-const darkTeal = "#245C5D";
-
 function Hero() {
   return (
     <section

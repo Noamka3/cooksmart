@@ -1,8 +1,28 @@
-import HomePage from "./Pages/HomePage"
+import { Navigate, Route, Routes } from "react-router-dom";
+
+import ProtectedRoute from "./components/ProtectedRoute";
+import AccountPage from "./Pages/AccountPage";
+import HomePage from "./Pages/HomePage";
+import LoginPage from "./Pages/LoginPage";
+import RegisterPage from "./Pages/RegisterPage";
 
 function App() {
-  return <HomePage />
-  
+  return (
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route
+        path="/account"
+        element={(
+          <ProtectedRoute>
+            <AccountPage />
+          </ProtectedRoute>
+        )}
+      />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
 }
 
-export default App
+export default App;
