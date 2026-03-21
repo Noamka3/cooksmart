@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-
+import OnboardingPage from "./Pages/OnboardingPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AccountPage from "./Pages/AccountPage";
 import HomePage from "./Pages/HomePage";
@@ -12,6 +12,14 @@ function App() {
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route
+        path="/onboarding"
+        element={(
+          <ProtectedRoute>
+            <OnboardingPage />
+          </ProtectedRoute>
+        )}
+      />
       <Route
         path="/account"
         element={(

@@ -21,9 +21,9 @@ export default function RegisterPage() {
   const [generalError, setGeneralError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (isAuthenticated) {
-    return <Navigate to="/account" replace />;
-  }
+if (isAuthenticated) {
+  return <Navigate to="/onboarding" replace />;
+}
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -46,7 +46,7 @@ export default function RegisterPage() {
       setFieldErrors({});
       setGeneralError("");
       await register(formData);
-      navigate("/account", { replace: true });
+      navigate("/onboarding", { replace: true });
     } catch (error) {
       const serverErrors = Object.fromEntries((error.fields || []).map((item) => [item.field, item.message]));
       setFieldErrors(serverErrors);
