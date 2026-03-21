@@ -4,6 +4,7 @@ const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
 const preferencesRoutes = require("./routes/preferencesRoutes");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
+const pantryRoutes = require("./routes/pantryRoutes");
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.get("/", (_req, res) => {
 
 app.use("/auth", authRoutes);
 app.use("/preferences", preferencesRoutes);
+app.use("/pantry", pantryRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
