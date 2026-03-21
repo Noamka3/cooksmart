@@ -3,6 +3,44 @@
 @tailwind components;
 @tailwind utilities;
 
+* {
+  font-family: 'DM Sans', sans-serif;
+  box-sizing: border-box;
+}
 
+:root {
+  color: #17322f;
+  background:
+    radial-gradient(circle at top left, rgba(208, 138, 42, 0.12), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(46, 114, 115, 0.16), transparent 26%),
+    #fffaf1;
+}
 
-* { font-family: 'DM Sans', sans-serif; }
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  color: #17322f;
+  background:
+    radial-gradient(circle at top left, rgba(208, 138, 42, 0.12), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(46, 114, 115, 0.16), transparent 26%),
+    #fffaf1;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
