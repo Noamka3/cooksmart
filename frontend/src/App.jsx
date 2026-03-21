@@ -5,6 +5,7 @@ import AccountPage from "./Pages/AccountPage";
 import HomePage from "./Pages/HomePage";
 import LoginPage from "./Pages/LoginPage";
 import RegisterPage from "./Pages/RegisterPage";
+import PantryPage from "./Pages/PantryPage";
 
 function App() {
   return (
@@ -27,6 +28,14 @@ function App() {
             <AccountPage />
           </ProtectedRoute>
         )}
+      />
+      <Route
+  path="/pantry"
+        element={
+          <ProtectedRoute>
+            <PantryPage />
+          </ProtectedRoute>
+        }
       />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

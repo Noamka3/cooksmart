@@ -59,7 +59,7 @@ export default function AccountPage() {
               שלום, {user?.name} 👋
             </h1>
             <p className="text-sm mt-2" style={{ color: "#5a7a75" }}>
-              מה נבשל היום?
+             ? מה נבשל היום
             </p>
           </div>
 
