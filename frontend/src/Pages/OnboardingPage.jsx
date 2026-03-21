@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 const teal = "#1a9c8a";
 const gold = "#c9a84c";
 const cream = "#f5ead0";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const CUISINES = [
   "איטלקי", "אסייתי", "ים תיכוני", "מקסיקני",
@@ -20,8 +21,6 @@ const DIETARY = [
   "ללא גלוטן", "ללא לקטוז", "טבעוני", "צמחוני",
   "ללא אגוזים", "ללא ביצים", "הלכה / כשר", "ללא סוכר",
 ];
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 function ToggleChip({ label, selected, onToggle }) {
   return (
@@ -64,11 +63,34 @@ export default function OnboardingPage() {
   const navigate = useNavigate();
   const { token } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
   const [likedCuisines, setLikedCuisines] = useState([]);
   const [favoriteFoodTypes, setFavoriteFoodTypes] = useState([]);
   const [dietaryRestrictions, setDietaryRestrictions] = useState([]);
+
+  // טען העדפות קיימות
+  useEffect(() => {
+    const fetchPrefs = async () => {
+      try {
+        const res = await fetch(`${API_URL}/preferences`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setLikedCuisines(data.preferences?.likedCuisines || []);
+          setFavoriteFoodTypes(data.preferences?.favoriteFoodTypes || []);
+          setDietaryRestrictions(data.preferences?.dietaryRestrictions || []);
+        }
+      } catch {
+        // silent
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchPrefs();
+  }, [token]);
 
   const toggle = (setter) => (item) => {
     setter((prev) =>
@@ -97,7 +119,6 @@ export default function OnboardingPage() {
       });
 
       if (!response.ok) throw new Error("Failed to save preferences");
-
       navigate("/account", { replace: true });
     } catch {
       setError("משהו השתבש. נסה שוב.");
@@ -106,6 +127,14 @@ export default function OnboardingPage() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: cream }}>
+        <p style={{ color: "#5a7a75" }}>טוען העדפות...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen px-6 py-12" style={{ background: cream }}>
       <div className="max-w-2xl mx-auto">
@@ -113,20 +142,19 @@ export default function OnboardingPage() {
         {/* Header */}
         <div className="text-center mb-10">
           <p className="text-xs uppercase tracking-widest font-bold mb-2" style={{ color: gold }}>
-            ברוך הבא ל-CookSmart
+            ההעדפות שלך
           </p>
           <h1 className="text-3xl md:text-4xl font-bold mb-3"
             style={{ fontFamily: "'Playfair Display', serif", color: "#1a2e2b" }}>
-            ספר לנו על הטעם שלך
+            מה הטעם שלך?
           </h1>
           <p className="text-sm" style={{ color: "#5a7a75" }}>
-            כדי שנוכל להמליץ לך מתכונים שבאמת מתאימים לך
+            בחר או עדכן את ההעדפות שלך — נשתמש בהן להמלצות מתכונים
           </p>
         </div>
 
         {/* Card */}
         <div className="bg-white rounded-3xl p-8 shadow-sm" style={{ border: `1px solid #e8f0ef` }}>
-
           <Section
             title="מטבחים אהובים"
             emoji="🌍"
@@ -134,7 +162,6 @@ export default function OnboardingPage() {
             selected={likedCuisines}
             onToggle={toggle(setLikedCuisines)}
           />
-
           <Section
             title="סוגי אוכל"
             emoji="🍽️"
@@ -142,7 +169,6 @@ export default function OnboardingPage() {
             selected={favoriteFoodTypes}
             onToggle={toggle(setFavoriteFoodTypes)}
           />
-
           <Section
             title="מגבלות תזונה"
             emoji="🥗"
@@ -159,20 +185,19 @@ export default function OnboardingPage() {
             <button
               onClick={() => navigate("/account", { replace: true })}
               className="flex-1 py-3 rounded-xl text-sm font-semibold border-2 transition-all"
-              style={{ borderColor: "#e0d5c5", color: "#5a7a75" }}
-            >
-              דלג בינתיים
+              style={{ borderColor: "#e0d5c5", color: "#5a7a75" }}>
+              ביטול
             </button>
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
               className="flex-1 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
-              style={{ background: teal }}
-            >
-              {isSubmitting ? "שומר..." : "שמור והמשך ←"}
+              style={{ background: teal }}>
+              {isSubmitting ? "שומר..." : "שמור העדפות ←"}
             </button>
           </div>
         </div>
+
       </div>
     </div>
   );

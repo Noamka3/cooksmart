@@ -55,31 +55,43 @@ export default function AccountPage() {
             <p className="text-xs uppercase tracking-widest font-bold mb-1" style={{ color: gold }}>
               ברוך הבא
             </p>
-            <h1 className="text-3xl md:text-4xl font-bold" style={{ fontFamily: "'Playfair Display', serif", color: "#1a2e2b" }}>
+            <h1 className="text-3xl md:text-4xl font-bold"
+              style={{ fontFamily: "'Playfair Display', serif", color: "#1a2e2b" }}>
               שלום, {user?.name} 👋
             </h1>
             <p className="text-sm mt-2" style={{ color: "#5a7a75" }}>
-             ? מה נבשל היום
+              מה נבשל היום?
             </p>
           </div>
 
           {/* Stats row */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+            {/* מרכיבים */}
             <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: `1px solid #e8f0ef` }}>
               <p className="text-xs uppercase tracking-widest font-bold mb-2" style={{ color: gold }}>מרכיבים</p>
               <p className="text-4xl font-bold" style={{ color: teal }}>{pantryCount}</p>
               <p className="text-xs mt-1" style={{ color: "#5a7a75" }}>במלאי שלך</p>
             </div>
 
+            {/* מטבחים */}
             <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: `1px solid #e8f0ef` }}>
               <p className="text-xs uppercase tracking-widest font-bold mb-2" style={{ color: gold }}>מטבחים</p>
-              <p className="text-4xl font-bold" style={{ color: teal }}>
-                {preferences?.likedCuisines?.length || 0}
-              </p>
-              <p className="text-xs mt-1" style={{ color: "#5a7a75" }}>נבחרו</p>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {preferences?.likedCuisines?.length > 0
+                  ? preferences.likedCuisines.map((c) => (
+                      <span key={c} className="text-xs px-2 py-1 rounded-full"
+                        style={{ background: "#f0faf8", color: teal, border: `1px solid #c8e8e4` }}>
+                        {c}
+                      </span>
+                    ))
+                  : <span className="text-xs" style={{ color: "#5a7a75" }}>לא נבחרו עדיין</span>
+                }
+              </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-5 shadow-sm col-span-2 md:col-span-1" style={{ border: `1px solid #e8f0ef` }}>
+            {/* פרופיל */}
+            <div className="bg-white rounded-2xl p-5 shadow-sm col-span-2 md:col-span-1"
+              style={{ border: `1px solid #e8f0ef` }}>
               <p className="text-xs uppercase tracking-widest font-bold mb-2" style={{ color: gold }}>פרופיל</p>
               <p className="text-sm font-semibold truncate" style={{ color: "#1a2e2b" }}>{user?.name}</p>
               <p className="text-xs truncate mt-1" style={{ color: "#5a7a75" }}>{user?.email}</p>
@@ -88,31 +100,25 @@ export default function AccountPage() {
 
           {/* Quick actions */}
           <div className="grid md:grid-cols-3 gap-4 mb-8">
-            <Link
-              to="/pantry"
-              className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all hover:-translate-y-1 group"
-              style={{ border: `1px solid #e8f0ef` }}
-            >
+            <Link to="/pantry"
+              className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all hover:-translate-y-1"
+              style={{ border: `1px solid #e8f0ef` }}>
               <div className="text-3xl mb-3">🥦</div>
               <h3 className="font-bold mb-1" style={{ color: "#1a2e2b" }}>המלאי שלי</h3>
               <p className="text-xs" style={{ color: "#5a7a75" }}>נהל את המרכיבים שיש לך בבית</p>
             </Link>
 
-            <Link
-              to="/recipes"
+            <Link to="/recipes"
               className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all hover:-translate-y-1"
-              style={{ border: `1px solid #e8f0ef` }}
-            >
+              style={{ border: `1px solid #e8f0ef` }}>
               <div className="text-3xl mb-3">🍽️</div>
               <h3 className="font-bold mb-1" style={{ color: "#1a2e2b" }}>חפש מתכונים</h3>
               <p className="text-xs" style={{ color: "#5a7a75" }}>מצא מתכונים לפי מה שיש לך</p>
             </Link>
 
-            <Link
-              to="/onboarding"
+            <Link to="/onboarding"
               className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all hover:-translate-y-1"
-              style={{ border: `1px solid #e8f0ef` }}
-            >
+              style={{ border: `1px solid #e8f0ef` }}>
               <div className="text-3xl mb-3">⚙️</div>
               <h3 className="font-bold mb-1" style={{ color: "#1a2e2b" }}>העדפות</h3>
               <p className="text-xs" style={{ color: "#5a7a75" }}>עדכן את ההעדפות הקולינריות שלך</p>
@@ -131,11 +137,8 @@ export default function AccountPage() {
                   ...(preferences.favoriteFoodTypes || []),
                   ...(preferences.dietaryRestrictions || []),
                 ].map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-3 py-1 rounded-full text-xs font-medium"
-                    style={{ background: "#f0faf8", color: teal, border: `1px solid #c8e8e4` }}
-                  >
+                  <span key={tag} className="px-3 py-1 rounded-full text-xs font-medium"
+                    style={{ background: "#f0faf8", color: teal, border: `1px solid #c8e8e4` }}>
                     {tag}
                   </span>
                 ))}
