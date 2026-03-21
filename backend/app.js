@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 
 const authRoutes = require("./routes/authRoutes");
+const preferencesRoutes = require("./routes/preferencesRoutes");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 
 const app = express();
@@ -25,11 +26,13 @@ app.use(
 );
 app.use(express.json());
 
+
 app.get("/", (_req, res) => {
   res.json({ message: "CookSmart auth API is running" });
 });
 
 app.use("/auth", authRoutes);
+app.use("/preferences", preferencesRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

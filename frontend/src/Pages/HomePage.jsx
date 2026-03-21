@@ -1,12 +1,14 @@
 import logo from "../assets/logo.png";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
+import { useAuth } from "../hooks/useAuth";
 
 const teal    = "#2E7273";
 const gold    = "#D08A2A";
 const cream   = "#f5ead0";
 const beige   = "#f5ede0";
 function Hero() {
+  const { isAuthenticated } = useAuth();
   return (
     <section
       className="min-h-screen flex flex-col items-center justify-center text-center px-6 relative overflow-hidden"
@@ -42,16 +44,26 @@ function Hero() {
       </p>
 
       <div className="flex gap-4 flex-wrap justify-center relative z-10">
-        <a href="/register"
-          className="px-8 py-3 rounded-lg text-white font-semibold text-base shadow transition-all hover:opacity-90"
-          style={{ background: teal }}>
-          התחל עכשיו בחינם
-        </a>
-        <a href="/login"
-          className="px-8 py-3 rounded-lg font-semibold text-base border-2 transition-all hover:opacity-80"
-          style={{ borderColor: teal, color: teal, background: "white" }}>
-          כניסה
-        </a>
+        {isAuthenticated ? (
+          <a href="/recipes"
+            className="px-8 py-3 rounded-lg text-white font-semibold text-base shadow transition-all hover:opacity-90"
+            style={{ background: teal }}>
+            לחיפוש מתכונים
+          </a>
+        ) : (
+          <>
+            <a href="/register"
+              className="px-8 py-3 rounded-lg text-white font-semibold text-base shadow transition-all hover:opacity-90"
+              style={{ background: teal }}>
+              התחל עכשיו בחינם
+            </a>
+            <a href="/login"
+              className="px-8 py-3 rounded-lg font-semibold text-base border-2 transition-all hover:opacity-80"
+              style={{ borderColor: teal, color: teal, background: "white" }}>
+              כניסה
+            </a>
+          </>
+        )}
       </div>
 
 <div className="flex gap-6 mt-14 text-3xl opacity-60 relative z-10">
@@ -156,6 +168,7 @@ function Features() {
 }
 
 function CTA() {
+  const { isAuthenticated } = useAuth();
   return (
     <section className="py-8 px-6 text-center" style={{ background: "#245C5D" }}>
       <p className="uppercase tracking-widest mb-1 text-xs font-bold" style={{ color: gold }}>
@@ -166,13 +179,23 @@ function CTA() {
         בוא נבשל ביחד
       </h2>
       <p className="text-white opacity-80 text-base mb-8 max-w-md mx-auto">
-        הצטרף עכשיו בחינם ותתחיל לקבל המלצות מתכונים מותאמות אישית.
+        {isAuthenticated
+          ? "בחר מרכיבים וקבל המלצות מתכונים מותאמות אישית."
+          : "הצטרף עכשיו בחינם ותתחיל לקבל המלצות מתכונים מותאמות אישית."}
       </p>
-      <a href="/register"
-        className="inline-block px-10 py-3 rounded-lg font-bold text-base transition-all hover:opacity-90 shadow-lg"
-        style={{ background: gold, color: "#1a2e2b" }}>
-        הרשמה חינמית
-      </a>
+      {isAuthenticated ? (
+        <a href="/recipes"
+          className="inline-block px-10 py-3 rounded-lg font-bold text-base transition-all hover:opacity-90 shadow-lg"
+          style={{ background: gold, color: "#1a2e2b" }}>
+          לחיפוש מתכונים
+        </a>
+      ) : (
+        <a href="/register"
+          className="inline-block px-10 py-3 rounded-lg font-bold text-base transition-all hover:opacity-90 shadow-lg"
+          style={{ background: gold, color: "#1a2e2b" }}>
+          הרשמה חינמית
+        </a>
+      )}
     </section>
   );
 }
