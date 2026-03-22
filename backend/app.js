@@ -5,6 +5,7 @@ const authRoutes = require("./routes/authRoutes");
 const preferencesRoutes = require("./routes/preferencesRoutes");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 const pantryRoutes = require("./routes/pantryRoutes");
+const recipeRoutes = require("./routes/recipeRoutes");
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.get("/", (_req, res) => {
 app.use("/auth", authRoutes);
 app.use("/preferences", preferencesRoutes);
 app.use("/pantry", pantryRoutes);
+app.use("/recipes", recipeRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
