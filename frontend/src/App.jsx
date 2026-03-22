@@ -6,6 +6,7 @@ import HomePage from "./Pages/HomePage";
 import LoginPage from "./Pages/LoginPage";
 import RegisterPage from "./Pages/RegisterPage";
 import PantryPage from "./Pages/PantryPage";
+import RecipesPage from "./Pages/RecipesPage";
 
 function App() {
   return (
@@ -36,6 +37,14 @@ function App() {
             <PantryPage />
           </ProtectedRoute>
         }
+      />
+      <Route
+        path="/recipes"
+        element={(
+          <ProtectedRoute>
+            <RecipesPage />
+          </ProtectedRoute>
+        )}
       />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
