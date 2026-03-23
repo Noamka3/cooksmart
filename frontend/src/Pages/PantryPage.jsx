@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -10,33 +10,71 @@ const cream = "#f5ead0";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const INGREDIENT_ICONS = {
-  עגבניה: "🍅", עגבניות: "🍅",
-  ביצה: "🥚", ביצים: "🥚",
-  גבינה: "🧀",
-  חלב: "🥛",
-  עוף: "🍗", חזה: "🍗",
-  בשר: "🥩",
-  לחם: "🍞",
-  אורז: "🍚",
-  פסטה: "🍝",
+  // ירקות
+  עגבניה: "🍅", עגבניות: "🍅", עגבנייה: "🍅",
+  גזר: "🥕", גזרים: "🥕",
+  מלפפון: "🥒", מלפפונים: "🥒",
+  פלפל: "🫑", פלפלים: "🫑",
+  תפוח: "🥔", תפוחי: "🥔",
+  בצל: "🧅", בצלים: "🧅",
   שום: "🧄",
-  בצל: "🧅",
-  לימון: "🍋",
-  תפוח: "🍎",
-  גזר: "🥕",
-  מלפפון: "🥒",
-  פלפל: "🫑",
-  תפוחי: "🥔",
-  שמן: "🫙",
+  חסה: "🥬", חסה: "🥬",
+  כרוב: "🥬", ברוקולי: "🥦",
+  תירס: "🌽", תירסים: "🌽",
+  אבוקדו: "🥑",
+  פטריות: "🍄", פטרייה: "🍄",
+  צנון: "🌱", כרובית: "🥦",
+  תרד: "🥬", אספרגוס: "🌱",
+  // פירות
+  תפוח: "🍎", תפוחים: "🍎",
+  בננה: "🍌", בננות: "🍌",
+  לימון: "🍋", לימונים: "🍋",
+  תפוז: "🍊", תפוזים: "🍊",
+  ענב: "🍇", ענבים: "🍇",
+  תות: "🍓", תותים: "🍓",
+  אבטיח: "🍉", מלון: "🍈",
+  אננס: "🍍", מנגו: "🥭",
+  // חלבון
+  ביצה: "🥚", ביצים: "🥚",
+  עוף: "🍗", חזה: "🍗", כנפיים: "🍗",
+  בשר: "🥩", סטייק: "🥩", טחון: "🥩",
+  דג: "🐟", סלמון: "🐟", טונה: "🐟",
+  נקניק: "🌭", שניצל: "🍗",
+  // חלב
+  גבינה: "🧀", גבינות: "🧀",
+  חלב: "🥛",
+  יוגורט: "🥛", שמנת: "🥛",
+  חמאה: "🧈", מרגרינה: "🧈",
+  // פחמימות
+  לחם: "🍞", פיתה: "🫓", לחמניה: "🍞",
+  אורז: "🍚",
+  פסטה: "🍝", ספגטי: "🍝", מקרוני: "🍝",
+  קמח: "🌾", שיבולת: "🌾",
+  שיבולת: "🌾", קוואקר: "🌾",
+  // תיבול ושמנים
+  שמן: "🫙", זית: "🫒", זיתים: "🫒",
   מלח: "🧂",
+  סוכר: "🍚", דבש: "🍯",
+  קטשופ: "🍅", מיונז: "🫙",
+  חומוס: "🫘", טחינה: "🫙",
+  // קטניות ודגנים
+  עדשים: "🫘", שעועית: "🫘", גרגרי: "🫘",
+  אפונה: "🟢",
 };
 
 const getIcon = (name) => {
   const lower = name.toLowerCase();
   for (const [key, icon] of Object.entries(INGREDIENT_ICONS)) {
-    if (lower.includes(key)) return icon;
+    if (lower.includes(key.toLowerCase())) return icon;
   }
-  return "🥗";
+  // fallback לפי קטגוריה כללית
+  if (/ירק|עלים|סלט/.test(lower)) return "🥬";
+  if (/פרי|מיץ/.test(lower)) return "🍑";
+  if (/בשר|עוף|דג|סלמון|טונה/.test(lower)) return "🥩";
+  if (/חלב|גבינ|יוגורט/.test(lower)) return "🥛";
+  if (/לחם|קמח|פיתה|עוגה/.test(lower)) return "🍞";
+  if (/שמן|רוטב|ממרח/.test(lower)) return "🫙";
+  return "❓";
 };
 
 const UNITS = ["יח'", "גרם", "ק\"ג", "מ\"ל", "ליטר", "כוס", "כף", "כפית", "חבילה"];
@@ -205,6 +243,85 @@ function EditItemModal({ item, onClose, onSave }) {
   );
 }
 
+function ImageIdentifyModal({ identified, onClose, onAdd }) {
+  const [form, setForm] = useState({
+    ingredientName: identified.ingredientName || "",
+    quantity: "",
+    unit: identified.suggestedUnit || "יח'",
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.ingredientName.trim()) return;
+    setLoading(true);
+    await onAdd(form);
+    setLoading(false);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      style={{ background: "rgba(0,0,0,0.4)" }}>
+      <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-xl" dir="rtl">
+        <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: gold }}>זוהה מהתמונה</p>
+        <h2 className="text-xl font-bold mb-5" style={{ color: "#1a2e2b", fontFamily: "'Playfair Display', serif" }}>
+          אשר/י והוסף/י למזווה
+        </h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="text-xs font-bold uppercase tracking-widest block mb-1" style={{ color: gold }}>שם המרכיב</label>
+            <input
+              type="text"
+              value={form.ingredientName}
+              onChange={(e) => setForm({ ...form, ingredientName: e.target.value })}
+              className="w-full px-4 py-3 rounded-xl border-2 outline-none text-sm"
+              style={{ borderColor: "#e0d5c5", color: "#1a2e2b" }}
+              autoFocus
+            />
+          </div>
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="text-xs font-bold uppercase tracking-widest block mb-1" style={{ color: gold }}>כמות</label>
+              <input
+                type="text"
+                placeholder="5"
+                value={form.quantity}
+                onChange={(e) => setForm({ ...form, quantity: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl border-2 outline-none text-sm"
+                style={{ borderColor: "#e0d5c5", color: "#1a2e2b" }}
+              />
+            </div>
+            <div className="flex-1">
+              <label className="text-xs font-bold uppercase tracking-widest block mb-1" style={{ color: gold }}>יחידה</label>
+              <select
+                value={form.unit}
+                onChange={(e) => setForm({ ...form, unit: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl border-2 outline-none text-sm"
+                style={{ borderColor: "#e0d5c5", color: "#1a2e2b" }}
+              >
+                {UNITS.map((u) => <option key={u}>{u}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="flex gap-3 mt-2">
+            <button type="button" onClick={onClose}
+              className="flex-1 py-3 rounded-xl text-sm font-semibold border-2"
+              style={{ borderColor: "#e0d5c5", color: "#5a7a75" }}>
+              ביטול
+            </button>
+            <button type="submit" disabled={loading}
+              className="flex-1 py-3 rounded-xl text-sm font-semibold text-white"
+              style={{ background: teal }}>
+              {loading ? "מוסיף..." : "הוסף"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function PantryPage() {
   const { token } = useAuth();
   const navigate = useNavigate();
@@ -213,6 +330,10 @@ export default function PantryPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [search, setSearch] = useState("");
+  const [identifiedItem, setIdentifiedItem] = useState(null);
+  const [imageLoading, setImageLoading] = useState(false);
+  const [imageStatus, setImageStatus] = useState(null); // { ok: bool, message: string }
+  const fileInputRef = useRef(null);
 
   const fetchItems = async () => {
     try {
@@ -257,6 +378,38 @@ export default function PantryPage() {
     fetchItems();
   };
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64Image = reader.result.split(",")[1];
+      const mimeType = file.type;
+      setImageLoading(true);
+      try {
+        const res = await fetch(`${API_URL}/pantry/identify-image`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ base64Image, mimeType }),
+        });
+        const data = await res.json();
+        if (!data.ingredientName || data.ingredientName === "לא זוהה") {
+          setImageStatus({ ok: false, message: "לא הצלחתי לזהות מוצר מזון בתמונה" });
+        } else {
+          setImageStatus({ ok: true, message: `זוהה: ${data.ingredientName}` });
+          setIdentifiedItem(data);
+        }
+      } catch {
+        setImageStatus({ ok: false, message: "שגיאה בזיהוי התמונה" });
+      } finally {
+        setImageLoading(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const filtered = items.filter((i) =>
     i.ingredientName.toLowerCase().includes(search.toLowerCase())
   );
@@ -266,6 +419,21 @@ export default function PantryPage() {
       <Navbar />
       {showAdd && <AddItemModal onClose={() => setShowAdd(false)} onAdd={handleAdd} />}
       {editItem && <EditItemModal item={editItem} onClose={() => setEditItem(null)} onSave={handleSave} />}
+
+      {identifiedItem && (
+        <ImageIdentifyModal
+          identified={identifiedItem}
+          onClose={() => setIdentifiedItem(null)}
+          onAdd={async (form) => { await handleAdd(form); setIdentifiedItem(null); }}
+        />
+      )}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleImageUpload}
+      />
 
       <main className="min-h-screen px-4 py-10 sm:px-6" style={{ background: cream }}>
         <div className="max-w-2xl mx-auto">
@@ -294,14 +462,32 @@ export default function PantryPage() {
             />
           </div>
 
-          {/* Add button */}
-          <button
-            onClick={() => setShowAdd(true)}
-            className="w-full py-3 rounded-xl text-sm font-semibold text-white shadow transition-all hover:opacity-90 mb-6"
-            style={{ background: teal }}
-          >
-            + הוסף מרכיב חדש
-          </button>
+          {/* Add buttons */}
+          <div className="flex gap-3 mb-6">
+            <button
+              onClick={() => setShowAdd(true)}
+              className="flex-1 py-3 rounded-xl text-sm font-semibold text-white shadow transition-all hover:opacity-90"
+              style={{ background: teal }}
+            >
+              + הוסף מרכיב חדש
+            </button>
+            <button
+              onClick={() => { setImageStatus(null); fileInputRef.current?.click(); }}
+              disabled={imageLoading}
+              className="px-5 py-3 rounded-xl text-sm font-semibold border-2 transition-all hover:opacity-80 disabled:opacity-50"
+              style={{ borderColor: teal, color: teal, background: "#f0faf8" }}
+              title="זהה מרכיב מתמונה"
+            >
+              {imageLoading ? <span className="text-xl">⏳</span> : <span className="text-xl">📷</span>}
+            </button>
+          </div>
+
+          {imageStatus ? (
+            <div className="flex items-center gap-2 mb-4 px-1 text-sm" dir="rtl">
+              <span>{imageStatus.ok ? "✅" : "❌"}</span>
+              <span style={{ color: imageStatus.ok ? teal : "#d14d4d" }}>{imageStatus.message}</span>
+            </div>
+          ) : null}
 
           {/* Items list */}
           {loading ? (
