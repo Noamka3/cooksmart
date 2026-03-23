@@ -16,12 +16,27 @@ const normalizeRecipe = (recipe) => {
       ? recipe.title.trim()
       : "ארוחה מהירה מהמזווה";
 
+  const ingredients =
+    Array.isArray(recipe?.ingredients) && recipe.ingredients.length > 0
+      ? recipe.ingredients
+      : [];
+
   const content =
     typeof recipe?.content === "string" && recipe.content.trim()
       ? recipe.content.trim()
       : "מצאתי לך רעיון קצר, טעים ונוח להכנה לפי מה שכבר יש בבית.";
 
-  return { title, content };
+  const bonusRecipes = Array.isArray(recipe?.bonusRecipes)
+    ? recipe.bonusRecipes
+        .filter((b) => b?.title && b?.content)
+        .map((b) => ({
+          title: b.title,
+          missingIngredients: Array.isArray(b.missingIngredients) ? b.missingIngredients : [],
+          content: b.content,
+        }))
+    : [];
+
+  return { title, ingredients, content, bonusRecipes };
 };
 
 const buildPrompt = ({ user, preferences, pantryItems }) => {
@@ -43,12 +58,15 @@ const buildPrompt = ({ user, preferences, pantryItems }) => {
 אתה CookSmart, עוזר בישול אישי חם, מעודד וברור.
 
 המטרה:
-- להציע מתכון אחד קצר ומעשי לפי המרכיבים שיש במזווה
+- להציע מתכון אחד קצר ומעשי אך ורק מהמרכיבים שיש במזווה
+- אסור להוסיף מרכיבים שלא ברשימה
+- אם יש לחם + כל מרכיב אחר = כריך, טוסט, סנדביץ — זה מספיק לחלוטין
+- אם יש ביצה = ביצה מקושקשת / עין — זה מספיק
+- אם יש 2-3 מרכיבים = תמיד אפשר להכין משהו
+- "אין מספיק מרכיבים" רק אם המזווה ריק לגמרי — אחרת תמיד צור מתכון
 - להתחשב במגבלות תזונה
 - להימנע ממרכיבים לא אהובים
 - להעדיף מטבחים אהובים וסוגי אוכל מועדפים כשאפשר
-- להתחשב בזמן הבישול המועדף כשאפשר
-- אם המזווה דל, עדיין להציע משהו פשוט, טעים ומעודד
 
 סגנון הכתיבה:
 - בעברית בלבד
@@ -59,19 +77,19 @@ const buildPrompt = ({ user, preferences, pantryItems }) => {
 
 מבנה התוכן:
 - פתיח קצר וחיובי במשפט אחד
-- 3 עד 5 שלבים פשוטים וברורים
-- משפט סיום חיובי וקצר
+- 3 עד 5 שלבים פשוטים וברורים — כל שלב בשורה חדשה עם מספור (1. 2. 3.)
+- משפט סיום חיובי וקצר בשורה חדשה
+- הפרד כל שלב עם תו שורה חדשה (\n) בתוך ה-JSON
 
 כללי פלט:
 - החזר JSON תקין בלבד
-- ללא Markdown
-- ללא HTML
-- ללא מפתחות נוספים
+- ללא Markdown, ללא HTML, ללא מפתחות נוספים
 - בדיוק במבנה:
-{"title":"כותרת קצרה","content":"טקסט מתכון קצר, ברור וחם"}
+{"title":"כותרת","ingredients":["מרכיב 1","מרכיב 2"],"content":"הוראות הכנה","bonusRecipes":[{"title":"כותרת בונוס","missingIngredients":["מרכיב חסר"],"content":"הוראות קצרות"}]}
+- אם אין מספיק מרכיבים: {"title":"אין מספיק מרכיבים","ingredients":[],"content":"המזווה לא מכיל מספיק מרכיבים. נסה/י להוסיף עוד!","bonusRecipes":[]}
 
-הטקסט צריך להיות קומפקטי ומתאים להצגה בתוך כרטיס אחד.
-אל תחזור יותר מדי על אותם מרכיבים.
+המתכון הראשי: רק מרכיבים מהמזווה.
+bonusRecipes: 2 מתכונים שדורשים עד 3 מרכיבים נוספים שאינם במזווה — ציין/י בדיוק מה חסר ב-missingIngredients.
 
 נתוני המשתמש:
 ${JSON.stringify(structuredInput, null, 2)}
@@ -105,14 +123,30 @@ const generateRecipeFromProfile = async (profile) => {
             title: {
               type: "string",
             },
+            ingredients: {
+              type: "array",
+              items: { type: "string" },
+            },
             content: {
               type: "string",
             },
+            bonusRecipes: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  title: { type: "string" },
+                  missingIngredients: { type: "array", items: { type: "string" } },
+                  content: { type: "string" },
+                },
+                required: ["title", "missingIngredients", "content"],
+              },
+            },
           },
-          required: ["title", "content"],
+          required: ["title", "ingredients", "content", "bonusRecipes"],
         },
         systemInstruction:
-          "כתוב בעברית בלבד. היה חם, ברור, קצר, מעשי ומעודד, כמו עוזר בישול אישי.",
+          "כתוב בעברית בלבד. פנה למשתמש/ת בלשון רבים או בצורה מכילה לזכר ולנקבה (למשל: 'תוכל/י', 'נסה/י', 'הוסף/י'). היה חם, ברור, קצר, מעשי ומעודד, כמו עוזר בישול אישי. אם יש אפילו מרכיב אחד — תמיד תציע מתכון. לעולם אל תגיד שאין מספיק מרכיבים כל עוד יש משהו אחד לאכול.",
       },
     });
   } catch (requestError) {

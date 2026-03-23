@@ -14,9 +14,9 @@ const generateRecipe = async (req, res, next) => {
     if (pantryItems.length === 0) {
       return res.json({
         recipe: {
-          title: "Your Pantry Is Waiting",
-          content:
-            "You do not have any pantry ingredients saved yet. Add a few ingredients first, and I will help you turn them into a simple, encouraging recipe you can cook today.",
+          title: "המזווה שלך ריק",
+          ingredients: [],
+          content: "עדיין לא הוספת מוצרים למזווה. הוסף כמה מרכיבים ואעזור לך להכין מהם ארוחה טעימה!",
         },
       });
     }
