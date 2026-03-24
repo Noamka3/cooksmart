@@ -13,18 +13,19 @@ const getPantry = async (req, res, next) => {
 
 const addItem = async (req, res, next) => {
   try {
-    const { ingredientName, quantity, unit, expiryDate } = req.body;
+    const { ingredientName, quantity, unit, expiryDate, imageUrl } = req.body;
 
-    if (!ingredientName) {
+    if (!ingredientName || !ingredientName.trim()) {
       return res.status(400).json({ message: "Ingredient name is required" });
     }
 
     const item = await PantryItem.create({
       userId: req.user._id,
-      ingredientName,
+      ingredientName: ingredientName.trim(),
       quantity: quantity || null,
       unit: unit || null,
       expiryDate: expiryDate || null,
+      imageUrl: imageUrl || null,
     });
 
     return res.status(201).json({ item });
@@ -44,12 +45,15 @@ const updateItem = async (req, res, next) => {
       return res.status(404).json({ message: "Item not found" });
     }
 
-    const { ingredientName, quantity, unit, expiryDate } = req.body;
+    const { ingredientName, quantity, unit, expiryDate, imageUrl } = req.body;
 
-    item.ingredientName = ingredientName ?? item.ingredientName;
+    if (typeof ingredientName === "string") {
+      item.ingredientName = ingredientName.trim() || item.ingredientName;
+    }
     item.quantity = quantity ?? item.quantity;
     item.unit = unit ?? item.unit;
     item.expiryDate = expiryDate ?? item.expiryDate;
+    item.imageUrl = imageUrl ?? item.imageUrl;
 
     await item.save();
 
