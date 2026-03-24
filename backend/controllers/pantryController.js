@@ -1,5 +1,6 @@
 const PantryItem = require("../models/PantryItem");
 const { identifyIngredientFromImage } = require("../utils/geminiImageService");
+const { uploadImage } = require("../utils/cloudinaryService");
 
 const getPantry = async (req, res, next) => {
   try {
@@ -77,14 +78,20 @@ const deleteItem = async (req, res, next) => {
 
 const identifyImage = async (req, res, next) => {
   try {
-    const { base64Image, mimeType } = req.body;
-
-    if (!base64Image || !mimeType) {
-      return res.status(400).json({ message: "base64Image and mimeType are required" });
+    if (!req.file) {
+      return res.status(400).json({ message: "image file is required" });
     }
 
-    const result = await identifyIngredientFromImage(base64Image, mimeType);
-    return res.json(result);
+    const buffer = req.file.buffer;
+    const mimeType = req.file.mimetype;
+    const base64Image = buffer.toString("base64");
+
+    const [geminiResult, imageUrl] = await Promise.all([
+      identifyIngredientFromImage(base64Image, mimeType),
+      uploadImage(buffer, mimeType),
+    ]);
+
+    return res.json({ ...geminiResult, imageUrl });
   } catch (error) {
     next(error);
   }

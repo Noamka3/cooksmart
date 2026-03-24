@@ -255,7 +255,7 @@ function ImageIdentifyModal({ identified, onClose, onAdd }) {
     e.preventDefault();
     if (!form.ingredientName.trim()) return;
     setLoading(true);
-    await onAdd(form);
+    await onAdd({ ...form, imageUrl: identified.imageUrl || null });
     setLoading(false);
     onClose();
   };
@@ -383,31 +383,28 @@ export default function PantryPage() {
     if (!file) return;
     e.target.value = "";
 
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const base64Image = reader.result.split(",")[1];
-      const mimeType = file.type;
-      setImageLoading(true);
-      try {
-        const res = await fetch(`${API_URL}/pantry/identify-image`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ base64Image, mimeType }),
-        });
-        const data = await res.json();
-        if (!data.ingredientName || data.ingredientName === "לא זוהה") {
-          setImageStatus({ ok: false, message: "לא הצלחתי לזהות מוצר מזון בתמונה" });
-        } else {
-          setImageStatus({ ok: true, message: `זוהה: ${data.ingredientName}` });
-          setIdentifiedItem(data);
-        }
-      } catch {
-        setImageStatus({ ok: false, message: "שגיאה בזיהוי התמונה" });
-      } finally {
-        setImageLoading(false);
+    setImageLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const res = await fetch(`${API_URL}/pantry/identify-image`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!data.ingredientName || data.ingredientName === "לא זוהה") {
+        setImageStatus({ ok: false, message: "לא הצלחתי לזהות מוצר מזון בתמונה" });
+      } else {
+        setImageStatus({ ok: true, message: `זוהה: ${data.ingredientName}` });
+        setIdentifiedItem(data);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch {
+      setImageStatus({ ok: false, message: "שגיאה בזיהוי התמונה" });
+    } finally {
+      setImageLoading(false);
+    }
   };
 
   const filtered = items.filter((i) =>
@@ -509,7 +506,12 @@ export default function PantryPage() {
                   className="bg-white rounded-2xl px-5 py-4 flex items-center justify-between shadow-sm"
                   style={{ border: `1px solid #e8f0ef` }}>
                   <div className="flex items-center gap-4">
-                    <span className="text-2xl">{getIcon(item.ingredientName)}</span>
+                    {item.imageUrl ? (
+                      <img src={item.imageUrl} alt={item.ingredientName}
+                        className="w-10 h-10 rounded-xl object-cover" />
+                    ) : (
+                      <span className="text-2xl">{getIcon(item.ingredientName)}</span>
+                    )}
                     <div>
                       <p className="font-semibold text-sm" style={{ color: "#1a2e2b" }}>
                         {item.ingredientName}
