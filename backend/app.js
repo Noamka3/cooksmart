@@ -6,6 +6,7 @@ const preferencesRoutes = require("./routes/preferencesRoutes");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 const pantryRoutes = require("./routes/pantryRoutes");
 const recipeRoutes = require("./routes/recipeRoutes");
+const savedRecipeRoutes = require("./routes/savedRecipeRoutes");
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.use("/auth", authRoutes);
 app.use("/preferences", preferencesRoutes);
 app.use("/pantry", pantryRoutes);
 app.use("/recipes", recipeRoutes);
+app.use("/saved-recipes", savedRecipeRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

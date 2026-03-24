@@ -50,7 +50,6 @@ export default function AccountPage() {
       <main className="min-h-screen px-4 py-10 sm:px-6" style={{ background: cream }}>
         <div className="max-w-4xl mx-auto">
 
-          {/* Welcome */}
           <div className="mb-8">
             <p className="text-xs uppercase tracking-widest font-bold mb-1" style={{ color: gold }}>
               ברוך הבא
@@ -64,16 +63,13 @@ export default function AccountPage() {
             </p>
           </div>
 
-          {/* Stats row */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-            {/* מרכיבים */}
             <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: `1px solid #e8f0ef` }}>
               <p className="text-xs uppercase tracking-widest font-bold mb-2" style={{ color: gold }}>מרכיבים</p>
               <p className="text-4xl font-bold" style={{ color: teal }}>{pantryCount}</p>
               <p className="text-xs mt-1" style={{ color: "#5a7a75" }}>במלאי שלך</p>
             </div>
 
-            {/* מטבחים */}
             <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: `1px solid #e8f0ef` }}>
               <p className="text-xs uppercase tracking-widest font-bold mb-2" style={{ color: gold }}>מטבחים</p>
               <div className="flex flex-wrap gap-1 mt-1">
@@ -89,7 +85,6 @@ export default function AccountPage() {
               </div>
             </div>
 
-            {/* פרופיל */}
             <div className="bg-white rounded-2xl p-5 shadow-sm col-span-2 md:col-span-1"
               style={{ border: `1px solid #e8f0ef` }}>
               <p className="text-xs uppercase tracking-widest font-bold mb-2" style={{ color: gold }}>פרופיל</p>
@@ -98,8 +93,7 @@ export default function AccountPage() {
             </div>
           </div>
 
-          {/* Quick actions */}
-          <div className="grid md:grid-cols-3 gap-4 mb-8">
+          <div className="grid md:grid-cols-4 gap-4 mb-8">
             <Link to="/pantry"
               className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all hover:-translate-y-1"
               style={{ border: `1px solid #e8f0ef` }}>
@@ -116,6 +110,14 @@ export default function AccountPage() {
               <p className="text-xs" style={{ color: "#5a7a75" }}>מצא מתכונים לפי מה שיש לך</p>
             </Link>
 
+            <Link to="/saved-recipes"
+              className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all hover:-translate-y-1"
+              style={{ border: `1px solid #e8f0ef` }}>
+              <div className="text-3xl mb-3">♥</div>
+              <h3 className="font-bold mb-1" style={{ color: "#1a2e2b" }}>מתכונים שמורים</h3>
+              <p className="text-xs" style={{ color: "#5a7a75" }}>חזור/י במהירות למתכונים שאהבת ושמרת</p>
+            </Link>
+
             <Link to="/onboarding"
               className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all hover:-translate-y-1"
               style={{ border: `1px solid #e8f0ef` }}>
@@ -125,7 +127,6 @@ export default function AccountPage() {
             </Link>
           </div>
 
-          {/* Preferences summary */}
           {preferences && (
             <div className="bg-white rounded-2xl p-6 shadow-sm" style={{ border: `1px solid #e8f0ef` }}>
               <p className="text-xs uppercase tracking-widest font-bold mb-4" style={{ color: gold }}>
