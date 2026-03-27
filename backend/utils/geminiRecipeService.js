@@ -26,6 +26,11 @@ const normalizeRecipe = (recipe) => {
       ? recipe.content.trim()
       : "מצאתי לך רעיון קצר, טעים ונוח להכנה לפי מה שכבר יש בבית.";
 
+  const matchPercentage =
+    typeof recipe?.matchPercentage === "number"
+      ? Math.min(100, Math.max(0, Math.round(recipe.matchPercentage)))
+      : 100;
+
   const bonusRecipes = Array.isArray(recipe?.bonusRecipes)
     ? recipe.bonusRecipes
         .filter((b) => b?.title && b?.content)
@@ -33,10 +38,14 @@ const normalizeRecipe = (recipe) => {
           title: b.title,
           missingIngredients: Array.isArray(b.missingIngredients) ? b.missingIngredients : [],
           content: b.content,
+          matchPercentage:
+            typeof b.matchPercentage === "number"
+              ? Math.min(100, Math.max(0, Math.round(b.matchPercentage)))
+              : null,
         }))
     : [];
 
-  return { title, ingredients, content, bonusRecipes };
+  return { title, ingredients, content, matchPercentage, bonusRecipes };
 };
 
 const buildPrompt = ({ user, preferences, pantryItems }) => {
@@ -88,8 +97,8 @@ const buildPrompt = ({ user, preferences, pantryItems }) => {
 {"title":"כותרת","ingredients":["מרכיב 1","מרכיב 2"],"content":"הוראות הכנה","bonusRecipes":[{"title":"כותרת בונוס","missingIngredients":["מרכיב חסר"],"content":"הוראות קצרות"}]}
 - אם אין מספיק מרכיבים: {"title":"אין מספיק מרכיבים","ingredients":[],"content":"המזווה לא מכיל מספיק מרכיבים. נסה/י להוסיף עוד!","bonusRecipes":[]}
 
-המתכון הראשי: רק מרכיבים מהמזווה.
-bonusRecipes: 2 מתכונים שדורשים עד 3 מרכיבים נוספים שאינם במזווה — ציין/י בדיוק מה חסר ב-missingIngredients.
+המתכון הראשי: רק מרכיבים מהמזווה. matchPercentage = אחוז המרכיבים הדרושים שיש כבר במזווה (100 אם הכל).
+bonusRecipes: 2 מתכונים שדורשים עד 3 מרכיבים נוספים שאינם במזווה — ציין/י בדיוק מה חסר ב-missingIngredients ואחוז התאמה ב-matchPercentage.
 
 נתוני המשתמש:
 ${JSON.stringify(structuredInput, null, 2)}
@@ -130,6 +139,9 @@ const generateRecipeFromProfile = async (profile) => {
             content: {
               type: "string",
             },
+            matchPercentage: {
+              type: "number",
+            },
             bonusRecipes: {
               type: "array",
               items: {
@@ -138,12 +150,13 @@ const generateRecipeFromProfile = async (profile) => {
                   title: { type: "string" },
                   missingIngredients: { type: "array", items: { type: "string" } },
                   content: { type: "string" },
+                  matchPercentage: { type: "number" },
                 },
-                required: ["title", "missingIngredients", "content"],
+                required: ["title", "missingIngredients", "content", "matchPercentage"],
               },
             },
           },
-          required: ["title", "ingredients", "content", "bonusRecipes"],
+          required: ["title", "ingredients", "content", "matchPercentage", "bonusRecipes"],
         },
         systemInstruction:
           "כתוב בעברית בלבד. פנה למשתמש/ת בלשון רבים או בצורה מכילה לזכר ולנקבה (למשל: 'תוכל/י', 'נסה/י', 'הוסף/י'). היה חם, ברור, קצר, מעשי ומעודד, כמו עוזר בישול אישי. אם יש אפילו מרכיב אחד — תמיד תציע מתכון. לעולם אל תגיד שאין מספיק מרכיבים כל עוד יש משהו אחד לאכול.",

@@ -9,6 +9,10 @@ const errorHandler = (error, _req, res, _next) => {
     error.statusCode ||
     (res.statusCode && res.statusCode !== 200 ? res.statusCode : 500);
 
+  if (statusCode >= 500) {
+    console.error(`[${new Date().toISOString()}] ${error.message}`, error.stack);
+  }
+
   res.status(statusCode).json({
     message: error.message || "Internal server error",
   });
