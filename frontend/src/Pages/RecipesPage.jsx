@@ -81,6 +81,7 @@ export default function RecipesPage() {
     instructions: bonus.content || "",
   });
 
+
   const refreshSavedState = async (nextRecipe) => {
     const savableRecipe = buildSavableRecipe(nextRecipe);
 
@@ -315,7 +316,7 @@ export default function RecipesPage() {
                   כרטיס מתכון
                 </p>
                 {recipe ? (
-                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-2 flex-wrap">
                   <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium" style={{ borderColor: "#e6edea", color: "#58736d", background: "#fbfdfa" }}>
                     <span className="h-2 w-2 rounded-full" style={{ background: isSaved ? teal : "#d5e3df" }} />
                     {isSaved ? "שמור במועדפים" : "מוכן לשמירה"}
@@ -462,6 +463,7 @@ export default function RecipesPage() {
                           {openBonus === i ? "⌃" : "+"}
                         </span>
                       </div>
+
                     </button>
                     {openBonus === i ? (
                       <div className="px-6 pb-5 text-sm leading-7 whitespace-pre-line" style={{ color: "#5a7a75", borderTop: "1px solid #e8f0ef" }}>

@@ -109,6 +109,7 @@ function AddItemModal({ onClose, onAdd }) {
 
   useEscapeKey(onClose);
 
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -124,17 +125,20 @@ function AddItemModal({ onClose, onAdd }) {
       onClose();
     } catch (requestError) {
       setError(getErrorMessage(requestError, "לא ניתן היה להוסיף את הפריט."));
+
     } finally {
       setLoading(false);
     }
   };
 
   return (
+
     <div
       className="fixed inset-0 z-50 flex items-center justify-center px-4"
       style={{ background: "rgba(0,0,0,0.42)" }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
+
       <div className="premium-panel modal-pop w-full max-w-md rounded-[2rem] p-6" dir="rtl">
         <h2 className="text-xl font-bold mb-5" style={{ color: "#1a2e2b", fontFamily: "'Playfair Display', serif" }}>
           הוסף מרכיב
@@ -195,6 +199,7 @@ function AddItemModal({ onClose, onAdd }) {
             />
           </div>
 
+
           {error ? (
             <div className="rounded-xl border px-4 py-3 text-sm" style={{ borderColor: "#f3cbc0", background: "#fff5f1", color: "#b45d43" }}>
               {error}
@@ -254,6 +259,7 @@ function EditItemModal({ item, onClose, onSave }) {
   };
 
   return (
+
     <div
       className="fixed inset-0 z-50 flex items-center justify-center px-4"
       style={{ background: "rgba(0,0,0,0.42)" }}
@@ -611,6 +617,7 @@ export default function PantryPage() {
       }
     } catch (error) {
       handlePantryError(error, "שגיאה בהוספת פריט", "לא ניתן להוסיף את הפריט למזווה.");
+
       throw error;
     }
   };
@@ -626,6 +633,7 @@ export default function PantryPage() {
       });
     } catch (error) {
       handlePantryError(error, "שגיאה בעדכון פריט", "לא ניתן לעדכן את הפריט.");
+
       throw error;
     }
   };
@@ -642,6 +650,7 @@ export default function PantryPage() {
       });
     } catch (error) {
       handlePantryError(error, "שגיאה במחיקת פריט", "לא ניתן להסיר את הפריט.");
+
       throw error;
     } finally {
       setDeleteLoadingId(null);
@@ -662,11 +671,13 @@ export default function PantryPage() {
       const data = await identifyPantryImage(token, file);
 
       if (!data.ingredientName || data.ingredientName === "לא זוהה") {
+
         const message = "לא הצלחנו לזהות פריט מזון בתמונה זו.";
         setImageStatus({ ok: false, message });
         showToast({
           type: "error",
           title: "זיהוי תמונה נכשל",
+
           message,
         });
         return;
@@ -675,6 +686,7 @@ export default function PantryPage() {
       setIdentifiedItem(data);
       setImageStatus({
         ok: true,
+
         message: `זוהה פריט: ${data.ingredientName}`,
       });
       showToast({
@@ -686,10 +698,12 @@ export default function PantryPage() {
       const message = getErrorMessage(error, "לא ניתן לזהות את התמונה שהועלתה.");
       setImageStatus({ ok: false, message });
       handlePantryError(error, "זיהוי תמונה נכשל", "לא ניתן לזהות את התמונה שהועלתה.");
+
     } finally {
       setImageLoading(false);
     }
   };
+
 
   const filtered = useMemo(() => {
     const list = items.filter((item) => item.ingredientName?.toLowerCase().includes(search.toLowerCase()));
@@ -704,6 +718,7 @@ export default function PantryPage() {
       return new Date(b.createdAt) - new Date(a.createdAt);
     });
   }, [items, search, sortBy]);
+
 
   return (
     <>
@@ -750,6 +765,7 @@ export default function PantryPage() {
                   המזווה שלי
                 </p>
                 <h1 className="text-4xl font-bold sm:text-5xl" style={{ fontFamily: "'Playfair Display', serif", color: "#1a2e2b" }}>
+
                   🥗 המזווה שלי
                 </h1>
                 <p className="mt-4 max-w-2xl text-sm leading-8 sm:text-base" style={{ color: "#58736d" }}>
@@ -760,12 +776,14 @@ export default function PantryPage() {
               <div className="premium-card rounded-[1.6rem] p-4 text-center">
                 <p className="text-xs font-bold uppercase tracking-[0.24em]" style={{ color: gold }}>פריטים במזווה</p>
                 <p className="mt-2 text-3xl font-bold" style={{ color: teal }}>{items.length}</p>
+
               </div>
             </div>
           </section>
 
           <section className="premium-panel mt-8 rounded-[2.2rem] p-6 sm:p-7" dir="rtl">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+
               <div className="flex flex-1 gap-3">
                 <div className="flex-1">
                   <label className="mb-2 block text-xs font-bold uppercase tracking-[0.24em]" style={{ color: gold }}>
@@ -795,11 +813,14 @@ export default function PantryPage() {
                     <option value="expiry">תאריך תפוגה</option>
                   </select>
                 </div>
+
               </div>
 
               <div className="flex flex-wrap gap-3">
                 <button type="button" onClick={() => setShowAdd(true)} className="primary-button rounded-2xl px-5 py-3 text-sm font-semibold">
+
                   ➕ הוסף מרכיב חדש
+
                 </button>
                 <button
                   type="button"
@@ -809,9 +830,11 @@ export default function PantryPage() {
                   }}
                   disabled={imageLoading}
                   className="ghost-button rounded-2xl px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+
                   title="זהה מרכיב מתמונה"
                 >
                   {imageLoading ? "🔍 מזהה תמונה..." : "📷 זיהוי מתמונה"}
+
                 </button>
               </div>
             </div>
@@ -847,6 +870,7 @@ export default function PantryPage() {
             </div>
           ) : (
             <section className="mt-8 space-y-4" dir="rtl">
+
               {search ? (
                 <p className="mb-1 text-xs" style={{ color: "#8aa09b" }}>
                   מציג {filtered.length} מתוך {items.length} פריטים
@@ -870,12 +894,15 @@ export default function PantryPage() {
                           <img src={item.imageUrl} alt={item.ingredientName} className="h-14 w-14 rounded-2xl object-cover shadow-sm" />
                         ) : (
                           <div className="flex h-14 w-14 items-center justify-center rounded-2xl text-3xl" style={{ background: "linear-gradient(135deg, #f0faf8, #e8f6f3)" }}>
+
                             {getIcon(item.ingredientName)}
                           </div>
                         )}
 
                         <div className="min-w-0">
+
                           <p className="truncate font-semibold sm:text-base" style={{ color: "#1a2e2b", fontSize: "0.95rem" }}>
+
                             {item.ingredientName}
                           </p>
                           {(item.quantity || item.unit) ? (
@@ -883,6 +910,7 @@ export default function PantryPage() {
                               {item.quantity} {item.unit}
                             </p>
                           ) : (
+
                             <p className="mt-0.5 text-xs" style={{ color: "#8aa09b" }}>
                               לא צוינה כמות
                             </p>
@@ -902,7 +930,9 @@ export default function PantryPage() {
                           className="ghost-button rounded-xl px-3 py-2 text-sm font-semibold"
                           disabled={isDeleting}
                         >
+
                           ✏️ עריכה
+
                         </button>
                         <button
                           type="button"
@@ -911,7 +941,9 @@ export default function PantryPage() {
                           style={{ background: "#fff3e3", color: "#9a5d13", border: "1px solid #f5c28b" }}
                           disabled={isDeleting}
                         >
+
                           {isDeleting ? "מוחק..." : "🗑️ מחק"}
+
                         </button>
                       </div>
                     </div>
