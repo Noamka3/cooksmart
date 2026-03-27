@@ -13,21 +13,48 @@ const getPantry = async (req, res, next) => {
 
 const addItem = async (req, res, next) => {
   try {
-    const { ingredientName, quantity, unit, expiryDate } = req.body;
+    const { ingredientName, quantity, unit, expiryDate, imageUrl } = req.body;
 
-    if (!ingredientName) {
+    if (!ingredientName || !ingredientName.trim()) {
       return res.status(400).json({ message: "Ingredient name is required" });
+    }
+
+    const normalizedName = ingredientName.trim();
+
+    const existing = await PantryItem.findOne({
+      userId: req.user._id,
+      ingredientName: { $regex: new RegExp(`^${normalizedName}$`, "i") },
+    });
+
+    if (existing) {
+      const existingQty = parseFloat(existing.quantity);
+      const newQty = parseFloat(quantity);
+      const sameUnit = (existing.unit || null) === (unit || null);
+
+      if (sameUnit && !isNaN(existingQty) && !isNaN(newQty)) {
+        existing.quantity = String(Math.round((existingQty + newQty) * 1000) / 1000);
+      } else if (quantity) {
+        existing.quantity = String(quantity);
+      }
+
+      if (unit) existing.unit = unit;
+      if (expiryDate) existing.expiryDate = expiryDate;
+      if (imageUrl) existing.imageUrl = imageUrl;
+
+      await existing.save();
+      return res.status(200).json({ item: existing, merged: true });
     }
 
     const item = await PantryItem.create({
       userId: req.user._id,
-      ingredientName,
+      ingredientName: normalizedName,
       quantity: quantity || null,
       unit: unit || null,
       expiryDate: expiryDate || null,
+      imageUrl: imageUrl || null,
     });
 
-    return res.status(201).json({ item });
+    return res.status(201).json({ item, merged: false });
   } catch (error) {
     next(error);
   }
@@ -44,12 +71,15 @@ const updateItem = async (req, res, next) => {
       return res.status(404).json({ message: "Item not found" });
     }
 
-    const { ingredientName, quantity, unit, expiryDate } = req.body;
+    const { ingredientName, quantity, unit, expiryDate, imageUrl } = req.body;
 
-    item.ingredientName = ingredientName ?? item.ingredientName;
+    if (typeof ingredientName === "string") {
+      item.ingredientName = ingredientName.trim() || item.ingredientName;
+    }
     item.quantity = quantity ?? item.quantity;
     item.unit = unit ?? item.unit;
     item.expiryDate = expiryDate ?? item.expiryDate;
+    item.imageUrl = imageUrl ?? item.imageUrl;
 
     await item.save();
 
