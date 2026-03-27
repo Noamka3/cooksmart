@@ -30,51 +30,59 @@ const buildAuthResponse = (user) => ({
   },
 });
 
-const register = async (req, res) => {
+const register = async (req, res, next) => {
   const validationError = handleValidation(req, res);
   if (validationError) {
     return validationError;
   }
 
-  const { name, email, password } = req.body;
-  const normalizedEmail = email.toLowerCase();
+  try {
+    const { name, email, password } = req.body;
+    const normalizedEmail = email.toLowerCase();
 
-  const existingUser = await User.findOne({ email: normalizedEmail });
-  if (existingUser) {
-    return res.status(409).json({ message: "An account with this email already exists" });
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+      return res.status(409).json({ message: "An account with this email already exists" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    const user = await User.create({
+      name: name.trim(),
+      email: normalizedEmail,
+      password: hashedPassword,
+    });
+
+    return res.status(201).json(buildAuthResponse(user));
+  } catch (error) {
+    return next(error);
   }
-
-  const hashedPassword = await bcrypt.hash(password, 12);
-
-  const user = await User.create({
-    name: name.trim(),
-    email: normalizedEmail,
-    password: hashedPassword,
-  });
-
-  return res.status(201).json(buildAuthResponse(user));
 };
 
-const login = async (req, res) => {
+const login = async (req, res, next) => {
   const validationError = handleValidation(req, res);
   if (validationError) {
     return validationError;
   }
 
-  const { email, password } = req.body;
-  const normalizedEmail = email.toLowerCase();
+  try {
+    const { email, password } = req.body;
+    const normalizedEmail = email.toLowerCase();
 
-  const user = await User.findOne({ email: normalizedEmail });
-  if (!user) {
-    return res.status(401).json({ message: "Invalid email or password" });
+    const user = await User.findOne({ email: normalizedEmail });
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    return res.json(buildAuthResponse(user));
+  } catch (error) {
+    return next(error);
   }
-
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    return res.status(401).json({ message: "Invalid email or password" });
-  }
-
-  return res.json(buildAuthResponse(user));
 };
 
 const getCurrentUser = async (req, res) => {

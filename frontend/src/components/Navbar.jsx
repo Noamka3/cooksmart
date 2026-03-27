@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 import logo from "../assets/logo2.png";
 import { useAuth } from "../hooks/useAuth";
@@ -8,93 +8,200 @@ const teal = "#1a9c8a";
 const cream = "#f5ead0";
 const gold = "#D08A2A";
 
+const NAV_ITEMS = [
+  { to: "/", label: "בית" },
+  { to: "/pantry", label: "מזווה" },
+  { to: "/recipes", label: "מתכונים" },
+  { to: "/saved-recipes", label: "מתכונים שמורים" },
+];
+
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, logout } = useAuth();
+  const location = useLocation();
 
   const closeMenu = () => setMenuOpen(false);
 
-  const guestLinks = (
-    <>
-      <Link
-        to="/login"
-        onClick={closeMenu}
-        className="px-5 py-2 rounded-lg text-sm font-semibold border-2 transition-all hover:opacity-80"
-        style={{ borderColor: teal, color: teal }}
-      >
-        התחברות
-      </Link>
-      <Link
-        to="/register"
-        onClick={closeMenu}
-        className="px-5 py-2 rounded-lg text-sm font-semibold text-white transition-all hover:opacity-90"
-        style={{ background: teal }}
-      >
-        הרשמה
-      </Link>
-    </>
-  );
-
-  const userLinks = (
-    <>
-      <Link
-        to="/account"
-        onClick={closeMenu}
-        className="px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5"
-        style={{ background: "rgba(26,156,138,0.12)", color: teal }}
-      >
-        {user?.name?.split(" ")[0] || "החשבון שלי"}
-      </Link>
-      <button
-        type="button"
-        onClick={() => {
-          logout();
-          closeMenu();
-        }}
-        className="px-4 py-2 rounded-lg text-sm font-semibold border transition-all hover:opacity-80"
-        style={{ borderColor: gold, color: "#73511a", background: "rgba(208,138,42,0.08)" }}
-      >
-        התנתקות
-      </button>
-    </>
-  );
+  const isActive = (path) =>
+    path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
 
   return (
     <nav
-      className="w-full px-6 py-3 flex items-center justify-between sticky top-0 z-50 shadow-sm"
-      style={{ background: cream, borderBottom: "1px solid rgba(201,168,76,0.2)" }}
+      className="w-full sticky top-0 z-50"
+      style={{ background: cream, borderBottom: "1px solid rgba(201,168,76,0.25)", boxShadow: "0 2px 12px rgba(26,46,43,0.06)" }}
     >
-      <Link to="/" onClick={closeMenu}>
-        <img src={logo} alt="CookSmart" className="h-12" />
-      </Link>
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+        {/* Logo */}
+        <Link to="/" onClick={closeMenu} className="shrink-0">
+          <img src={logo} alt="CookSmart" className="h-11" />
+        </Link>
 
-      <div className="hidden md:flex items-center gap-3">
-        {user ? userLinks : guestLinks}
+        {/* Desktop nav */}
+        <div className="hidden md:flex items-center gap-1" dir="rtl">
+          {user
+            ? NAV_ITEMS.map(({ to, label }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  className="relative px-4 py-2 text-sm font-medium rounded-xl transition-colors"
+                  style={{
+                    color: isActive(to) ? teal : "#4a6661",
+                    background: isActive(to) ? "rgba(26,156,138,0.1)" : "transparent",
+                    fontWeight: isActive(to) ? 600 : 500,
+                  }}
+                >
+                  {label}
+                  {isActive(to) && (
+                    <span
+                      className="absolute bottom-0 right-3 left-3 h-0.5 rounded-full"
+                      style={{ background: teal }}
+                    />
+                  )}
+                </Link>
+              ))
+            : null}
+        </div>
+
+        {/* Desktop actions */}
+        <div className="hidden md:flex items-center gap-2" dir="rtl">
+          {user ? (
+            <>
+              <div
+                className="h-5 w-px mx-1"
+                style={{ background: "rgba(201,168,76,0.35)" }}
+              />
+              <Link
+                to="/account"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-semibold transition-colors hover:bg-[rgba(26,156,138,0.08)]"
+                style={{ color: teal }}
+              >
+                <span
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white"
+                  style={{ background: teal }}
+                >
+                  {user?.name?.[0]?.toUpperCase() || "U"}
+                </span>
+                {user?.name?.split(" ")[0] || "החשבון שלי"}
+              </Link>
+              <button
+                type="button"
+                onClick={logout}
+                className="px-4 py-1.5 rounded-xl text-sm font-semibold border transition-colors hover:bg-[rgba(208,138,42,0.1)]"
+                style={{ borderColor: "rgba(208,138,42,0.5)", color: "#73511a" }}
+              >
+                התנתקות
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="px-5 py-2 rounded-xl text-sm font-semibold border-2 transition-all hover:bg-[rgba(26,156,138,0.06)]"
+                style={{ borderColor: teal, color: teal }}
+              >
+                התחברות
+              </Link>
+              <Link
+                to="/register"
+                className="px-5 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
+                style={{ background: teal }}
+              >
+                הרשמה
+              </Link>
+            </>
+          )}
+        </div>
+
+        {/* Mobile hamburger */}
+        <button
+          className="md:hidden flex flex-col justify-center gap-1.5 p-2"
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="תפריט"
+        >
+          <span
+            className="w-6 h-0.5 block rounded-full transition-all duration-200"
+            style={{ background: teal, transform: menuOpen ? "rotate(45deg) translateY(8px)" : "none" }}
+          />
+          <span
+            className="w-6 h-0.5 block rounded-full transition-all duration-200"
+            style={{ background: teal, opacity: menuOpen ? 0 : 1 }}
+          />
+          <span
+            className="w-6 h-0.5 block rounded-full transition-all duration-200"
+            style={{ background: teal, transform: menuOpen ? "rotate(-45deg) translateY(-8px)" : "none" }}
+          />
+        </button>
       </div>
 
-      <button className="md:hidden flex flex-col gap-1.5 p-2" onClick={() => setMenuOpen(!menuOpen)}>
-        <span
-          className="w-6 h-0.5 block transition-all"
-          style={{ background: teal, transform: menuOpen ? "rotate(45deg) translateY(8px)" : "none" }}
-        />
-        <span
-          className="w-6 h-0.5 block transition-all"
-          style={{ background: teal, opacity: menuOpen ? 0 : 1 }}
-        />
-        <span
-          className="w-6 h-0.5 block transition-all"
-          style={{ background: teal, transform: menuOpen ? "rotate(-45deg) translateY(-8px)" : "none" }}
-        />
-      </button>
-
+      {/* Mobile menu */}
       {menuOpen && (
         <div
-          className="absolute top-full left-0 w-full flex flex-col items-center gap-4 py-6 md:hidden shadow-md"
-          style={{ background: cream, borderBottom: "1px solid rgba(201,168,76,0.2)" }}
+          className="md:hidden px-6 pb-5 pt-2 flex flex-col gap-1"
+          style={{ background: cream, borderTop: "1px solid rgba(201,168,76,0.2)" }}
+          dir="rtl"
         >
-          <div className="flex gap-3 flex-wrap justify-center">
-            {user ? userLinks : guestLinks}
-          </div>
+          {user
+            ? NAV_ITEMS.map(({ to, label }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  onClick={closeMenu}
+                  className="px-4 py-3 rounded-xl text-sm font-medium transition-colors"
+                  style={{
+                    color: isActive(to) ? teal : "#4a6661",
+                    background: isActive(to) ? "rgba(26,156,138,0.1)" : "transparent",
+                    fontWeight: isActive(to) ? 600 : 500,
+                  }}
+                >
+                  {label}
+                </Link>
+              ))
+            : null}
+
+          <div
+            className="my-2 h-px"
+            style={{ background: "rgba(201,168,76,0.25)" }}
+          />
+
+          {user ? (
+            <div className="flex gap-2">
+              <Link
+                to="/account"
+                onClick={closeMenu}
+                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-center transition-colors"
+                style={{ background: "rgba(26,156,138,0.1)", color: teal }}
+              >
+                {user?.name?.split(" ")[0] || "החשבון שלי"}
+              </Link>
+              <button
+                type="button"
+                onClick={() => { logout(); closeMenu(); }}
+                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-colors"
+                style={{ borderColor: "rgba(208,138,42,0.5)", color: "#73511a" }}
+              >
+                התנתקות
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <Link
+                to="/login"
+                onClick={closeMenu}
+                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-center border-2 transition-all"
+                style={{ borderColor: teal, color: teal }}
+              >
+                התחברות
+              </Link>
+              <Link
+                to="/register"
+                onClick={closeMenu}
+                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-center text-white transition-all"
+                style={{ background: teal }}
+              >
+                הרשמה
+              </Link>
+            </div>
+          )}
         </div>
       )}
     </nav>

@@ -3,10 +3,7 @@ const UserPreference = require("../models/UserPreference");
 const getPreferences = async (req, res, next) => {
   try {
     const prefs = await UserPreference.findOne({ userId: req.user._id });
-    if (!prefs) {
-      return res.status(404).json({ message: "Preferences not found" });
-    }
-    return res.json({ preferences: prefs });
+    return res.json({ preferences: prefs || null });
   } catch (error) {
     next(error);
   }
