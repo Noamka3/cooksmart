@@ -9,10 +9,10 @@ const cream = "#f5ead0";
 const gold = "#D08A2A";
 
 const NAV_ITEMS = [
-  { to: "/", label: "בית" },
-  { to: "/pantry", label: "מזווה" },
-  { to: "/recipes", label: "מתכונים" },
   { to: "/saved-recipes", label: "מתכונים שמורים" },
+  { to: "/recipes", label: "מתכונים" },
+  { to: "/pantry", label: "מקרר" },
+  { to: "/", label: "דף ראשי" },
 ];
 
 export default function Navbar() {
@@ -30,14 +30,14 @@ export default function Navbar() {
       className="w-full sticky top-0 z-50"
       style={{ background: cream, borderBottom: "1px solid rgba(201,168,76,0.25)", boxShadow: "0 2px 12px rgba(26,46,43,0.06)" }}
     >
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+      <div className="flex h-16 w-full items-center justify-between px-8">
         {/* Logo */}
         <Link to="/" onClick={closeMenu} className="shrink-0">
           <img src={logo} alt="CookSmart" className="h-11" />
         </Link>
 
-        {/* Desktop nav */}
-        <div className="hidden md:flex items-center gap-1" dir="rtl">
+        {/* Desktop nav + actions (right side) */}
+        <div className="hidden md:flex items-center gap-1">
           {user
             ? NAV_ITEMS.map(({ to, label }) => (
                 <Link
@@ -60,14 +60,11 @@ export default function Navbar() {
                 </Link>
               ))
             : null}
-        </div>
 
-        {/* Desktop actions */}
-        <div className="hidden md:flex items-center gap-2" dir="rtl">
           {user ? (
             <>
               <div
-                className="h-5 w-px mx-1"
+                className="h-5 w-px mx-2"
                 style={{ background: "rgba(201,168,76,0.35)" }}
               />
               <Link
@@ -75,12 +72,6 @@ export default function Navbar() {
                 className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-semibold transition-colors hover:bg-[rgba(26,156,138,0.08)]"
                 style={{ color: teal }}
               >
-                <span
-                  className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white"
-                  style={{ background: teal }}
-                >
-                  {user?.name?.[0]?.toUpperCase() || "U"}
-                </span>
                 {user?.name?.split(" ")[0] || "החשבון שלי"}
               </Link>
               <button
@@ -94,6 +85,10 @@ export default function Navbar() {
             </>
           ) : (
             <>
+              <div
+                className="h-5 w-px mx-2"
+                style={{ background: "rgba(201,168,76,0.35)" }}
+              />
               <Link
                 to="/login"
                 className="px-5 py-2 rounded-xl text-sm font-semibold border-2 transition-all hover:bg-[rgba(26,156,138,0.06)]"
