@@ -1,6 +1,6 @@
 const PantryItem = require("../models/PantryItem");
 const { identifyIngredientFromImage } = require("../utils/geminiImageService");
-const { uploadImage } = require("../utils/cloudinaryService");
+const { uploadImage, deleteImage } = require("../utils/cloudinaryService");
 
 const getPantry = async (req, res, next) => {
   try {
@@ -13,13 +13,21 @@ const getPantry = async (req, res, next) => {
 
 const addItem = async (req, res, next) => {
   try {
-    const { ingredientName, quantity, unit, expiryDate, imageUrl } = req.body;
+    const { ingredientName, quantity, unit, expiryDate } = req.body;
 
     if (!ingredientName || !ingredientName.trim()) {
       return res.status(400).json({ message: "Ingredient name is required" });
     }
 
     const normalizedName = ingredientName.trim();
+
+    let imageUrl = null;
+    let imagePublicId = null;
+    if (req.file) {
+      const uploaded = await uploadImage(req.file.buffer, req.file.mimetype);
+      imageUrl = uploaded.url;
+      imagePublicId = uploaded.publicId;
+    }
 
     const existing = await PantryItem.findOne({
       userId: req.user._id,
@@ -39,7 +47,7 @@ const addItem = async (req, res, next) => {
 
       if (unit) existing.unit = unit;
       if (expiryDate) existing.expiryDate = expiryDate;
-      if (imageUrl) existing.imageUrl = imageUrl;
+      if (imageUrl) { existing.imageUrl = imageUrl; existing.imagePublicId = imagePublicId; }
 
       await existing.save();
       return res.status(200).json({ item: existing, merged: true });
@@ -51,7 +59,8 @@ const addItem = async (req, res, next) => {
       quantity: quantity || null,
       unit: unit || null,
       expiryDate: expiryDate || null,
-      imageUrl: imageUrl || null,
+      imageUrl,
+      imagePublicId,
     });
 
     return res.status(201).json({ item, merged: false });
@@ -100,6 +109,10 @@ const deleteItem = async (req, res, next) => {
       return res.status(404).json({ message: "Item not found" });
     }
 
+    if (item.imagePublicId) {
+      await deleteImage(item.imagePublicId).catch(() => {});
+    }
+
     return res.json({ message: "Item removed" });
   } catch (error) {
     next(error);
@@ -112,19 +125,12 @@ const identifyImage = async (req, res, next) => {
       return res.status(400).json({ message: "image file is required" });
     }
 
-    const buffer = req.file.buffer;
+    const base64Image = req.file.buffer.toString("base64");
     const mimeType = req.file.mimetype;
-    const base64Image = buffer.toString("base64");
 
     const geminiResult = await identifyIngredientFromImage(base64Image, mimeType);
 
-    if (!geminiResult.ingredientName || geminiResult.ingredientName === "לא זוהה") {
-      return res.json({ ...geminiResult, imageUrl: null });
-    }
-
-    const imageUrl = await uploadImage(buffer, mimeType);
-
-    return res.json({ ...geminiResult, imageUrl });
+    return res.json(geminiResult);
   } catch (error) {
     next(error);
   }

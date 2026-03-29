@@ -13,10 +13,13 @@ const uploadImage = (buffer, mimeType) =>
         { folder: "cooksmart/pantry", resource_type: "image" },
         (error, result) => {
           if (error) return reject(error);
-          resolve(result.secure_url);
+          resolve({ url: result.secure_url, publicId: result.public_id });
         }
       )
       .end(buffer);
   });
 
-module.exports = { uploadImage };
+const deleteImage = (publicId) =>
+  cloudinary.uploader.destroy(publicId, { resource_type: "image" });
+
+module.exports = { uploadImage, deleteImage };

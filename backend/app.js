@@ -8,6 +8,7 @@ const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 const pantryRoutes = require("./routes/pantryRoutes");
 const recipeRoutes = require("./routes/recipeRoutes");
 const savedRecipeRoutes = require("./routes/savedRecipeRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 
 const app = express();
 
@@ -56,6 +57,7 @@ app.use("/preferences", preferencesRoutes);
 app.use("/pantry", pantryRoutes);
 app.use("/recipes", recipeLimiter, recipeRoutes);
 app.use("/saved-recipes", savedRecipeRoutes);
+app.use("/admin", adminRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

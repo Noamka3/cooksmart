@@ -29,6 +29,10 @@ const pantryItemSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    imagePublicId: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,

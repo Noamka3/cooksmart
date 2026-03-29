@@ -598,9 +598,24 @@ export default function PantryPage() {
     fetchItems().catch(() => {});
   }, [fetchItems]);
 
-  const handleAdd = async (form) => {
+  const expiryAlerts = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const in3Days = new Date(today);
+    in3Days.setDate(today.getDate() + 3);
+
+    const expired = items.filter((i) => i.expiryDate && new Date(i.expiryDate) < today);
+    const expiringSoon = items.filter((i) => {
+      if (!i.expiryDate) return false;
+      const d = new Date(i.expiryDate);
+      return d >= today && d <= in3Days;
+    });
+    return { expired, expiringSoon };
+  }, [items]);
+
+  const handleAdd = async (form, imageFile = null) => {
     try {
-      const result = await createPantryItem(token, form);
+      const result = await createPantryItem(token, form, imageFile);
       await fetchItems({ silent: true });
       if (result.merged) {
         showToast({
@@ -683,7 +698,7 @@ export default function PantryPage() {
         return;
       }
 
-      setIdentifiedItem(data);
+      setIdentifiedItem({ ...data, file });
       setImageStatus({
         ok: true,
 
@@ -730,7 +745,7 @@ export default function PantryPage() {
           identified={identifiedItem}
           onClose={() => setIdentifiedItem(null)}
           onAdd={async (form) => {
-            await handleAdd(form);
+            await handleAdd(form, identifiedItem.file);
             setIdentifiedItem(null);
           }}
         />
@@ -780,6 +795,31 @@ export default function PantryPage() {
               </div>
             </div>
           </section>
+
+          {(expiryAlerts.expired.length > 0 || expiryAlerts.expiringSoon.length > 0) && (
+            <div className="mt-6 flex flex-col gap-3" dir="rtl">
+              {expiryAlerts.expired.length > 0 && (
+                <div className="flex items-start gap-3 rounded-2xl px-5 py-4 text-sm font-medium"
+                  style={{ background: "#fff1f0", border: "1.5px solid #fca5a5", color: "#b91c1c" }}>
+                  <span className="text-lg">🚨</span>
+                  <span>
+                    <strong>{expiryAlerts.expired.length} פריטים פגי תוקף: </strong>
+                    {expiryAlerts.expired.map((i) => i.ingredientName).join(", ")}
+                  </span>
+                </div>
+              )}
+              {expiryAlerts.expiringSoon.length > 0 && (
+                <div className="flex items-start gap-3 rounded-2xl px-5 py-4 text-sm font-medium"
+                  style={{ background: "#fffbeb", border: "1.5px solid #fcd34d", color: "#92400e" }}>
+                  <span className="text-lg">⚠️</span>
+                  <span>
+                    <strong>{expiryAlerts.expiringSoon.length} פריטים עומדים לפוג תוקף ב-3 ימים הקרובים: </strong>
+                    {expiryAlerts.expiringSoon.map((i) => i.ingredientName).join(", ")}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
 
           <section className="premium-panel mt-8 rounded-[2.2rem] p-6 sm:p-7" dir="rtl">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">

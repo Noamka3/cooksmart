@@ -25,7 +25,7 @@ const upload = multer({
 router.use(protect);
 
 router.get("/", getPantry);
-router.post("/", addItem);
+router.post("/", upload.single("image"), addItem);
 router.post("/identify-image", imageLimiter, upload.single("image"), identifyImage);
 router.patch("/:id", updateItem);
 router.delete("/:id", deleteItem);

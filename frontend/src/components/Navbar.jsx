@@ -63,6 +63,19 @@ export default function Navbar() {
 
           {user ? (
             <>
+              {user.role === "admin" && (
+                <Link
+                  to="/admin"
+                  className="relative px-4 py-2 text-sm font-medium rounded-xl transition-colors"
+                  style={{
+                    color: isActive("/admin") ? "#92400e" : "#4a6661",
+                    background: isActive("/admin") ? "rgba(251,191,36,0.15)" : "transparent",
+                    fontWeight: isActive("/admin") ? 600 : 500,
+                  }}
+                >
+                  👑 ניהול
+                </Link>
+              )}
               <div
                 className="h-5 w-px mx-2"
                 style={{ background: "rgba(201,168,76,0.35)" }}
@@ -73,6 +86,11 @@ export default function Navbar() {
                 style={{ color: teal }}
               >
                 {user?.name?.split(" ")[0] || "החשבון שלי"}
+                {user?.role === "admin" && (
+                  <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-red-500 text-white leading-none">
+                    ADMIN
+                  </span>
+                )}
               </Link>
               <button
                 type="button"
@@ -159,7 +177,18 @@ export default function Navbar() {
           />
 
           {user ? (
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
+              {user.role === "admin" && (
+                <Link
+                  to="/admin"
+                  onClick={closeMenu}
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-center transition-colors"
+                  style={{ background: "rgba(251,191,36,0.15)", color: "#92400e" }}
+                >
+                  👑 לוח ניהול
+                </Link>
+              )}
+              <div className="flex gap-2">
               <Link
                 to="/account"
                 onClick={closeMenu}
@@ -176,6 +205,7 @@ export default function Navbar() {
               >
                 התנתקות
               </button>
+            </div>
             </div>
           ) : (
             <div className="flex gap-2">

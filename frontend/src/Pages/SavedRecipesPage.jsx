@@ -11,10 +11,6 @@ const teal = "#1a9c8a";
 const gold = "#c9a84c";
 const cream = "#f5ead0";
 
-function RecipeContentPreview({ text }) {
-  const preview = text.length > 180 ? `${text.slice(0, 180).trim()}...` : text;
-  return <p className="text-sm leading-7 whitespace-pre-line" style={{ color: "#5a7a75" }}>{preview}</p>;
-}
 
 function RecipeSparkIcon() {
   return (
@@ -133,9 +129,37 @@ function FullRecipeModal({ recipe, removingId, onClose, onRemove }) {
               <p className="mb-3 text-xs font-bold uppercase tracking-[0.24em]" style={{ color: teal }}>
                 הוראות מלאות
               </p>
-              <p className="text-sm leading-8 whitespace-pre-line sm:text-[0.96rem]" style={{ color: "#4f6c66" }}>
-                {recipe.instructions}
-              </p>
+              <div className="space-y-2">
+                {(() => {
+                  const text = recipe.instructions.replace(/\\n/g, "\n");
+                  const parts = text.split(/\n+/).filter(s => s.trim());
+                  const steps = parts.length > 1
+                    ? parts
+                    : text.split(/(?=\d+\.\s)/).filter(s => s.trim());
+                  return steps.map((step, i) => {
+                    const trimmed = step.trim();
+                    const match = trimmed.match(/^(\d+)\.\s*(.*)/s);
+                    if (match) {
+                      return (
+                        <div key={i} className="flex gap-3 items-start">
+                          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                            style={{ background: teal }}>
+                            {match[1]}
+                          </span>
+                          <p className="text-sm leading-7 sm:text-[0.96rem]" style={{ color: "#4f6c66" }}>
+                            {match[2]}
+                          </p>
+                        </div>
+                      );
+                    }
+                    return (
+                      <p key={i} className="text-sm leading-7 sm:text-[0.96rem]" style={{ color: "#4f6c66" }}>
+                        {trimmed}
+                      </p>
+                    );
+                  });
+                })()}
+              </div>
             </section>
 
             {recipe.bonusRecipes?.length > 0 ? (
@@ -200,6 +224,9 @@ export default function SavedRecipesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [removingId, setRemovingId] = useState(null);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 10;
 
   useEffect(() => {
     const fetchSavedRecipes = async () => {
@@ -293,6 +320,19 @@ export default function SavedRecipesPage() {
             </div>
           </section>
 
+          {savedRecipes.length > 0 && (
+            <div className="mt-6">
+              <input
+                type="text"
+                placeholder="חפש מתכון שמור..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-2xl border-2 bg-white px-5 py-3 text-sm outline-none"
+                style={{ borderColor: "#e0d5c5", color: "#1a2e2b" }}
+              />
+            </div>
+          )}
+
           {isLoading ? (
             <div className="mt-8 rounded-[2rem] bg-white/90 px-6 py-16 text-center shadow-sm backdrop-blur" style={{ border: "1px solid #e8f0ef" }}>
               <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-[#1a9c8a]/15 border-t-[#1a9c8a]" />
@@ -334,117 +374,96 @@ export default function SavedRecipesPage() {
                 </Link>
               </div>
             </div>
-          ) : (
-            <div className="mt-8 grid gap-5 lg:grid-cols-2">
-              {savedRecipes.map((recipe) => {
-                const ingredientPreview = recipe.ingredients?.slice(0, 4) || [];
-                const extraIngredientCount = Math.max((recipe.ingredients?.length || 0) - ingredientPreview.length, 0);
-
-                return (
-                  <article
-                    key={recipe._id}
-                    className="group flex h-full flex-col overflow-hidden rounded-[2rem] bg-white/92 p-6 shadow-[0_22px_60px_rgba(33,53,49,0.08)] backdrop-blur transition-all hover:-translate-y-1 hover:shadow-[0_30px_80px_rgba(33,53,49,0.12)]"
-                    style={{ border: "1px solid #e8f0ef" }}
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="mb-3 flex flex-wrap gap-2">
-                          <span className="rounded-full px-3 py-1 text-xs font-semibold" style={{ background: "#f7fbfa", color: teal, border: "1px solid #deebe7" }}>
-                            נשמר ב-{new Date(recipe.createdAt).toLocaleDateString("he-IL")}
-                          </span>
-                          {recipe.bonusRecipes?.length > 0 ? (
-                            <span className="rounded-full px-3 py-1 text-xs font-semibold" style={{ background: "#fff8ef", color: "#a06a1d", border: "1px solid #f0d6ab" }}>
-                              {recipe.bonusRecipes.length} רעיונות נוספים
-                            </span>
-                          ) : null}
-                        </div>
-                        <h2
-                          className="text-2xl font-bold leading-tight"
-                          style={{ fontFamily: "'Playfair Display', serif", color: "#1a2e2b" }}
-                        >
-                          {recipe.title}
-                        </h2>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => handleRemove(recipe._id, recipe.title)}
-                        disabled={removingId === recipe._id}
-                        className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
-                        style={{ background: "#fff3e3", color: "#9a5d13", border: "1px solid #f5c28b" }}
-                      >
-                        <span className="text-base">{removingId === recipe._id ? "..." : "×"}</span>
-                        {removingId === recipe._id ? "מסיר..." : "הסר"}
-                      </button>
-                    </div>
-
-                    <div className="mt-5">
-                      <p className="mb-3 text-xs font-bold uppercase tracking-[0.24em]" style={{ color: teal }}>
-                        מרכיבים
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {ingredientPreview.map((item, index) => (
-                          <span
-                            key={`${recipe._id}-${index}`}
-                            className="rounded-full px-3 py-1.5 text-sm"
-                            style={{ background: "#f9fbfa", color: "#355650", border: "1px solid #e3edea" }}
-                          >
-                            {item}
-                          </span>
-                        ))}
-                        {extraIngredientCount > 0 ? (
-                          <span
-                            className="rounded-full px-3 py-1.5 text-sm font-medium"
-                            style={{ background: "#fffaf4", color: "#7a5832", border: "1px solid #ead9be" }}
-                          >
-                            +{extraIngredientCount} נוספים
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    <div className="mt-5 rounded-[1.5rem] p-4" style={{ background: "linear-gradient(180deg, #fffdf9 0%, #f8fbfa 100%)", border: "1px solid #edf3f0" }}>
-                      <p className="mb-3 text-xs font-bold uppercase tracking-[0.24em]" style={{ color: teal }}>
-                        תקציר הכנה
-                      </p>
-                      <RecipeContentPreview text={recipe.instructions} />
-                    </div>
-
-                    {recipe.bonusRecipes?.length > 0 ? (
-                      <div className="mt-5 rounded-[1.5rem] p-4" style={{ background: "#fffcf6", border: "1px solid #f3e2c0" }}>
-                        <p className="mb-2 text-xs font-bold uppercase tracking-[0.24em]" style={{ color: gold }}>
-                          נשמרו גם רעיונות נוספים
-                        </p>
-                        <div className="space-y-2">
-                          {recipe.bonusRecipes.slice(0, 2).map((bonus, index) => (
-                            <div key={`${recipe._id}-bonus-${index}`}>
-                              <p className="text-sm font-semibold" style={{ color: "#1a2e2b" }}>{bonus.title}</p>
-                              {bonus.missingIngredients?.length > 0 ? (
-                                <p className="mt-1 text-xs" style={{ color: "#b66b31" }}>
-                                  חסר/ים: {bonus.missingIngredients.join(", ")}
-                                </p>
-                              ) : null}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-
-                    <div className="mt-5 pt-1">
-                      <button
-                        type="button"
+          ) : (() => {
+              const filtered = savedRecipes.filter((r) => r.title.toLowerCase().includes(search.toLowerCase()));
+              const totalPages = Math.ceil(filtered.length / PER_PAGE);
+              const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+              return (
+                <>
+                  <div className="mt-6 flex flex-col gap-2">
+                    {paginated.map((recipe, index) => (
+                      <article
+                        key={recipe._id}
                         onClick={() => setSelectedRecipe(recipe)}
-                        className="inline-flex items-center rounded-xl px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 hover:opacity-95"
-                        style={{ background: "#f0faf8", color: teal, border: "1px solid #c8e8e4" }}
+                        className="flex items-center justify-between gap-4 rounded-2xl bg-white px-5 py-4 cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md"
+                        style={{ border: "1px solid #e8f0ef" }}
                       >
-                        צפה במתכון
+                        <div className="flex items-center gap-4 min-w-0">
+                          <span className="text-sm font-bold shrink-0" style={{ color: "#c8d8d4", minWidth: "1.5rem" }}>
+                            {(page - 1) * PER_PAGE + index + 1}
+                          </span>
+                          <div className="min-w-0">
+                            <h2 className="font-bold text-base truncate" style={{ color: "#1a2e2b" }}>
+                              {recipe.title}
+                            </h2>
+                            <p className="text-xs mt-0.5 truncate" style={{ color: "#8aaba5" }}>
+                              {recipe.ingredients?.slice(0, 4).join(" · ")}
+                              {recipe.ingredients?.length > 4 ? ` · +${recipe.ingredients.length - 4}` : ""}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className="text-xs hidden sm:block" style={{ color: "#a0b8b4" }}>
+                            {new Date(recipe.createdAt).toLocaleDateString("he-IL")}
+                          </span>
+                          {recipe.bonusRecipes?.length > 0 && (
+                            <span className="rounded-full px-2 py-0.5 text-xs font-semibold hidden sm:block"
+                              style={{ background: "#fff8ef", color: "#a06a1d", border: "1px solid #f0d6ab" }}>
+                              +{recipe.bonusRecipes.length}
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleRemove(recipe._id, recipe.title); }}
+                            disabled={removingId === recipe._id}
+                            className="rounded-xl px-3 py-1.5 text-xs font-semibold transition hover:opacity-80 disabled:opacity-50"
+                            style={{ background: "#fff3e3", color: "#9a5d13", border: "1px solid #f5c28b" }}
+                          >
+                            {removingId === recipe._id ? "..." : "הסר"}
+                          </button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+
+                  {totalPages > 1 && (
+                    <div className="mt-6 flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="rounded-xl px-4 py-2 text-sm font-semibold transition hover:opacity-80 disabled:opacity-30"
+                        style={{ background: "white", border: "1px solid #e0d5c5", color: "#1a2e2b" }}
+                      >
+                        ← הקודם
+                      </button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                        <button
+                          key={p}
+                          onClick={() => setPage(p)}
+                          className="h-9 w-9 rounded-xl text-sm font-semibold transition"
+                          style={{
+                            background: p === page ? teal : "white",
+                            color: p === page ? "white" : "#1a2e2b",
+                            border: `1px solid ${p === page ? teal : "#e0d5c5"}`,
+                          }}
+                        >
+                          {p}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={page === totalPages}
+                        className="rounded-xl px-4 py-2 text-sm font-semibold transition hover:opacity-80 disabled:opacity-30"
+                        style={{ background: "white", border: "1px solid #e0d5c5", color: "#1a2e2b" }}
+                      >
+                        הבא →
                       </button>
                     </div>
-                  </article>
-                );
-              })}
-            </div>
-          )}
+                  )}
+                </>
+              );
+            })()}
         </div>
       </main>
       <Footer />

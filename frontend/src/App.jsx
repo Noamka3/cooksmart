@@ -1,5 +1,6 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import OnboardingPage from "./Pages/OnboardingPage";
+import NotFoundPage from "./Pages/NotFoundPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AccountPage from "./Pages/AccountPage";
 import HomePage from "./Pages/HomePage";
@@ -8,6 +9,7 @@ import RegisterPage from "./Pages/RegisterPage";
 import PantryPage from "./Pages/PantryPage";
 import RecipesPage from "./Pages/RecipesPage";
 import SavedRecipesPage from "./Pages/SavedRecipesPage";
+import AdminPage from "./Pages/AdminPage";
 
 function App() {
   return (
@@ -55,7 +57,15 @@ function App() {
           </ProtectedRoute>
         )}
       />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route
+        path="/admin"
+        element={(
+          <ProtectedRoute>
+            <AdminPage />
+          </ProtectedRoute>
+        )}
+      />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

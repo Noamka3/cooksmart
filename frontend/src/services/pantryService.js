@@ -35,11 +35,17 @@ export const getPantryItems = (token) =>
     method: "GET",
   });
 
-export const createPantryItem = (token, payload) =>
-  buildPantryRequest("/pantry", token, {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+export const createPantryItem = (token, payload, imageFile = null) => {
+  if (imageFile) {
+    const formData = new FormData();
+    Object.entries(payload).forEach(([key, value]) => {
+      if (value != null) formData.append(key, value);
+    });
+    formData.append("image", imageFile);
+    return buildPantryRequest("/pantry", token, { method: "POST", body: formData });
+  }
+  return buildPantryRequest("/pantry", token, { method: "POST", body: JSON.stringify(payload) });
+};
 
 export const updatePantryItem = (token, id, payload) =>
   buildPantryRequest(`/pantry/${id}`, token, {

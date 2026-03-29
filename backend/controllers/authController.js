@@ -26,6 +26,7 @@ const buildAuthResponse = (user) => ({
     id: user._id,
     name: user.name,
     email: user.email,
+    role: user.role,
     createdAt: user.createdAt,
   },
 });
@@ -91,6 +92,7 @@ const getCurrentUser = async (req, res) => {
       id: req.user._id,
       name: req.user.name,
       email: req.user.email,
+      role: req.user.role,
       createdAt: req.user.createdAt,
     },
   });
