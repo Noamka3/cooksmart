@@ -116,10 +116,13 @@ const identifyImage = async (req, res, next) => {
     const mimeType = req.file.mimetype;
     const base64Image = buffer.toString("base64");
 
-    const [geminiResult, imageUrl] = await Promise.all([
-      identifyIngredientFromImage(base64Image, mimeType),
-      uploadImage(buffer, mimeType),
-    ]);
+    const geminiResult = await identifyIngredientFromImage(base64Image, mimeType);
+
+    if (!geminiResult.ingredientName || geminiResult.ingredientName === "לא זוהה") {
+      return res.json({ ...geminiResult, imageUrl: null });
+    }
+
+    const imageUrl = await uploadImage(buffer, mimeType);
 
     return res.json({ ...geminiResult, imageUrl });
   } catch (error) {

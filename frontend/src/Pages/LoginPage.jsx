@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 
 import AuthForm from "../components/AuthForm";
 import AuthLayout from "../components/AuthLayout";
@@ -57,46 +57,40 @@ export default function LoginPage() {
 
   return (
     <AuthLayout
-      alternateLabel="Create your account"
+      alternateLabel="הירשם עכשיו"
       alternateLink="/register"
-      alternateText="New to CookSmart?"
-      eyebrow="Welcome back"
-      subtitle="Sign in to unlock ingredient-based recommendations, personalized food preferences, and your saved CookSmart experience."
-      title="Log in and pick up dinner planning right where you left it."
+      alternateText="חדש ב-CookSmart?"
+      eyebrow="ברוך השב"
+      subtitle="היכנס כדי לקבל המלצות מתכונים מותאמות אישית ולנהל את המזווה שלך."
+      title="כניסה לחשבון שלך"
     >
       <AuthForm
         fieldErrors={fieldErrors}
         fields={[
           {
             name: "email",
-            label: "Email",
+            label: "אימייל",
             type: "email",
             autoComplete: "email",
             placeholder: "chef@cooksmart.app",
           },
           {
             name: "password",
-            label: "Password",
+            label: "סיסמה",
             type: "password",
             autoComplete: "current-password",
-            placeholder: "Enter your password",
+            placeholder: "הכנס את הסיסמה שלך",
           },
         ]}
         formData={formData}
         generalError={generalError}
         isSubmitting={isSubmitting}
-        loadingLabel="Signing you in..."
+        loadingLabel="מתחבר..."
         onChange={handleChange}
         onSubmit={handleSubmit}
-        submitLabel="Log in"
+        submitLabel="כניסה"
       />
 
-      <div className="mt-5 rounded-2xl border border-[#e9dbc1] bg-[#fffaf4] px-4 py-3 text-sm text-[#58736d]">
-        Demo tip: connect the backend and MongoDB, then sign in with your registered CookSmart account.
-      </div>
-      <Link className="mt-5 inline-flex text-sm font-medium text-[#2E7273]" to="/">
-        Back to homepage
-      </Link>
     </AuthLayout>
   );
 }

@@ -782,10 +782,28 @@ export default function PantryPage() {
           </section>
 
           <section className="premium-panel mt-8 rounded-[2.2rem] p-6 sm:p-7" dir="rtl">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
 
-              <div className="flex flex-1 gap-3">
-                <div className="flex-1">
+              <div className="flex flex-wrap gap-3 shrink-0">
+                <button type="button" onClick={() => setShowAdd(true)} className="primary-button rounded-2xl px-5 py-3 text-sm font-semibold">
+                  ➕ הוסף מרכיב חדש
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImageStatus(null);
+                    fileInputRef.current?.click();
+                  }}
+                  disabled={imageLoading}
+                  className="ghost-button rounded-2xl px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                  title="זהה מרכיב מתמונה"
+                >
+                  {imageLoading ? "🔍 מזהה תמונה..." : "📷 זיהוי מתמונה"}
+                </button>
+              </div>
+
+              <div className="flex flex-1 gap-3 lg:justify-end">
+                <div className="flex-1 lg:max-w-xs">
                   <label className="mb-2 block text-xs font-bold uppercase tracking-[0.24em]" style={{ color: gold }}>
                     חיפוש
                   </label>
@@ -813,30 +831,8 @@ export default function PantryPage() {
                     <option value="expiry">תאריך תפוגה</option>
                   </select>
                 </div>
-
               </div>
 
-              <div className="flex flex-wrap gap-3">
-                <button type="button" onClick={() => setShowAdd(true)} className="primary-button rounded-2xl px-5 py-3 text-sm font-semibold">
-
-                  ➕ הוסף מרכיב חדש
-
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setImageStatus(null);
-                    fileInputRef.current?.click();
-                  }}
-                  disabled={imageLoading}
-                  className="ghost-button rounded-2xl px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
-
-                  title="זהה מרכיב מתמונה"
-                >
-                  {imageLoading ? "🔍 מזהה תמונה..." : "📷 זיהוי מתמונה"}
-
-                </button>
-              </div>
             </div>
 
             {imageStatus ? (

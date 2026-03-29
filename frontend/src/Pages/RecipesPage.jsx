@@ -250,20 +250,32 @@ export default function RecipesPage() {
       <Navbar />
       <main className="min-h-screen px-4 py-10 sm:px-6" dir="rtl" style={{ background: cream }}>
         <div className="max-w-3xl mx-auto">
-          <div className="mb-8">
-            <p className="text-xs uppercase tracking-[0.28em] font-bold mb-1" style={{ color: gold }}>
-              עוזר המתכונים
-            </p>
-            <h1
-              className="text-3xl md:text-4xl font-bold"
-              style={{ fontFamily: "'Playfair Display', serif", color: "#1a2e2b" }}
-            >
-              המתכון שלך
-            </h1>
-            <p className="text-sm mt-2 max-w-2xl leading-7" style={{ color: "#5a7a75" }}>
-              קבל/י הצעת מתכון מותאמת אישית לפי מה שיש לך במזווה ובהעדפות האוכל שלך.
-            </p>
-          </div>
+            <section
+            className="premium-panel mb-8 rounded-[2.4rem] px-6 py-8 sm:px-8 sm:py-9"
+            style={{ background: "linear-gradient(135deg, rgba(255,250,244,0.97), rgba(240,250,248,0.92))" }}
+          >
+            <div className="relative flex flex-wrap items-end justify-between gap-5">
+              <div>
+                <p className="mb-2 text-xs font-bold uppercase tracking-[0.28em]" style={{ color: gold }}>
+                  עוזר המתכונים
+                </p>
+                <h1
+                  className="text-4xl font-bold sm:text-5xl"
+                  style={{ fontFamily: "'Playfair Display', serif", color: "#1a2e2b" }}
+                >
+                  👨‍🍳 המתכון שלך
+                </h1>
+                <p className="mt-4 max-w-2xl text-sm leading-8 sm:text-base" style={{ color: "#58736d" }}>
+                  קבל/י הצעת מתכון מותאמת אישית לפי מה שיש לך במקרר ובהעדפות האוכל שלך.
+                </p>
+              </div>
+
+              <div className="premium-card rounded-[1.6rem] p-4 text-center">
+                <p className="text-xs font-bold uppercase tracking-[0.24em]" style={{ color: gold }}>מתכון מותאם</p>
+                <p className="mt-2 text-3xl">🍽️</p>
+              </div>
+            </div>
+          </section>
 
           <div
             className="mb-6 overflow-hidden rounded-[2rem] bg-white/90 p-6 shadow-[0_24px_65px_rgba(33,53,49,0.08)] backdrop-blur"

@@ -58,59 +58,56 @@ if (isAuthenticated) {
 
   return (
     <AuthLayout
-      alternateLabel="Log in"
+      alternateLabel="כניסה"
       alternateLink="/login"
-      alternateText="Already have a CookSmart account?"
-      eyebrow="Create account"
-      subtitle="Build your CookSmart profile to get ingredient-aware suggestions, a personalized food journey, and a smoother cooking workflow."
-      title="Join CookSmart and turn the ingredients in your kitchen into your next meal."
+      alternateText="כבר יש לך חשבון?"
+      eyebrow="יצירת חשבון"
+      subtitle="צור פרופיל ותקבל המלצות מתכונים מותאמות אישית לפי מה שיש לך בבית."
+      title="הצטרף ל-CookSmart"
     >
       <AuthForm
         fieldErrors={fieldErrors}
         fields={[
           {
             name: "name",
-            label: "Full name",
+            label: "שם מלא",
             type: "text",
             autoComplete: "name",
-            placeholder: "Noam Chef",
+            placeholder: "נועם שף",
           },
           {
             name: "email",
-            label: "Email",
+            label: "אימייל",
             type: "email",
             autoComplete: "email",
             placeholder: "chef@cooksmart.app",
           },
           {
             name: "password",
-            label: "Password",
+            label: "סיסמה",
             type: "password",
             autoComplete: "new-password",
-            placeholder: "At least 8 characters",
+            placeholder: "לפחות 8 תווים",
           },
           {
             name: "confirmPassword",
-            label: "Confirm password",
+            label: "אימות סיסמה",
             type: "password",
             autoComplete: "new-password",
-            placeholder: "Repeat your password",
+            placeholder: "הכנס שוב את הסיסמה",
           },
         ]}
         formData={formData}
         generalError={generalError}
         isSubmitting={isSubmitting}
-        loadingLabel="Creating your account..."
+        loadingLabel="יוצר חשבון..."
         onChange={handleChange}
         onSubmit={handleSubmit}
-        submitLabel="Create account"
+        submitLabel="הרשמה"
       />
 
-      <div className="mt-5 rounded-2xl border border-[#e9dbc1] bg-[#fffaf4] px-4 py-3 text-sm text-[#58736d]">
-        Your account is secured with hashed passwords and JWT-based authentication on the backend.
-      </div>
       <Link className="mt-5 inline-flex text-sm font-medium text-[#2E7273]" to="/">
-        Back to homepage
+        חזרה לדף הראשי
       </Link>
     </AuthLayout>
   );

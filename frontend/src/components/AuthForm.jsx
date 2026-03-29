@@ -38,7 +38,8 @@ export default function AuthForm({
       ) : null}
 
       <button
-        className="flex w-full items-center justify-center rounded-2xl bg-[#2E7273] px-5 py-3 text-base font-semibold text-white shadow-lg shadow-[#2E7273]/20 transition hover:-translate-y-0.5 hover:bg-[#245C5D] disabled:cursor-not-allowed disabled:opacity-70"
+        className="flex w-full items-center justify-center rounded-xl px-5 py-3 text-base font-semibold text-white shadow-md transition hover:opacity-90 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70"
+        style={{ background: "linear-gradient(135deg, #1a9c8a, #245C5D)" }}
         disabled={isSubmitting}
         type="submit"
       >
