@@ -150,16 +150,16 @@ npm install
 
 ```env
 PORT=5000
-MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/cooksmart
-JWT_SECRET=your_long_random_secret
-FRONTEND_URL=http://localhost:5173
+MONGODB_URI=
+JWT_SECRET=
+FRONTEND_URL=
 
-GEMINI_API_KEY=your_gemini_api_key
-GEMINI_MODEL=gemini-2.5-flash
+GEMINI_API_KEY=
+GEMINI_MODEL=
 
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
 ```
 
 ```bash
