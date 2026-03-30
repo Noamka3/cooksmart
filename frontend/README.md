@@ -10,6 +10,10 @@ This repository contains the **frontend** — a React single-page application th
 - Personal pantry/fridge management with add, edit, delete, and AI image recognition
 - AI-powered recipe generation based on pantry contents and user preferences
 - Save and manage favorite recipes
+- Recipe ratings (1–5 stars) with animated star burst effect
+- Top-rated recipes carousel on the home page (visible to all)
+- Comments on recipes with like (♥) / dislike (💔) support
+- Admin dashboard with statistics, user management, and analytics
 - User authentication with JWT
 - Hebrew RTL interface
 
@@ -72,20 +76,22 @@ frontend/
 │   │   ├── logo.png
 │   │   └── logo2.png
 │   ├── Pages/
-│   │   ├── HomePage.jsx
+│   │   ├── HomePage.jsx       # Landing page + top-rated carousel
 │   │   ├── LoginPage.jsx
 │   │   ├── RegisterPage.jsx
 │   │   ├── OnboardingPage.jsx
 │   │   ├── AccountPage.jsx
 │   │   ├── PantryPage.jsx
 │   │   ├── RecipesPage.jsx
-│   │   └── SavedRecipesPage.jsx
+│   │   ├── SavedRecipesPage.jsx  # ratings, star burst, comments
+│   │   └── AdminPage.jsx         # admin only
 │   ├── components/
 │   │   ├── Navbar.jsx
 │   │   ├── Footer.jsx
 │   │   ├── AuthLayout.jsx
 │   │   ├── AuthForm.jsx
-│   │   └── ProtectedRoute.jsx
+│   │   ├── ProtectedRoute.jsx
+│   │   └── CommentsSection.jsx   # recipe comments with likes/dislikes
 │   ├── context/
 │   │   ├── AuthContext.jsx
 │   │   └── ToastContext.jsx
@@ -95,7 +101,8 @@ frontend/
 │   ├── services/
 │   │   ├── authService.js
 │   │   ├── pantryService.js
-│   │   └── savedRecipesService.js
+│   │   ├── savedRecipesService.js  # includes rateRecipe, getTopRatedRecipes
+│   │   └── commentService.js       # new
 │   └── utils/
 │       └── authValidation.js
 ```
@@ -114,22 +121,23 @@ frontend/
 | `/pantry` | PantryPage | Yes |
 | `/recipes` | RecipesPage | Yes |
 | `/saved-recipes` | SavedRecipesPage | Yes |
+| `/admin` | AdminPage | Yes (Admin only) |
 | `*` | Redirect to `/` | — |
 
-Protected routes use `<ProtectedRoute>` which redirects unauthenticated users to `/login` and preserves the intended path for redirect after login.
+Protected routes use `<ProtectedRoute>` which redirects unauthenticated users to `/login`.
 
 ---
 
 ## Pages
 
 ### HomePage
-Landing page with hero section, "How it works" steps, features overview, and a call-to-action. Adapts CTAs based on auth state.
+Landing page with hero section, "How it works" steps, features overview, and a call-to-action. Includes a **top-rated recipes carousel** visible to all visitors — clicking a recipe card opens a full modal with ingredients, instructions, and comments.
 
 ### LoginPage / RegisterPage
 Auth pages using the shared `AuthLayout` and `AuthForm` components. Handle client-side validation, field-level errors from the server, and redirect on success.
 
 ### OnboardingPage
-Preference selection after registration. Users pick liked cuisines, food types, and dietary restrictions via toggle chips. Fetches existing preferences on load and saves via `PUT /preferences`.
+Preference selection after registration. Users pick liked cuisines, food types, and dietary restrictions via toggle chips.
 
 ### AccountPage
 User dashboard showing pantry item count, liked cuisines, and quick nav cards to all features.
@@ -150,28 +158,43 @@ AI recipe generation:
 - Save / unsave with animated heart icon
 
 ### SavedRecipesPage
-Grid of all saved recipes. Each card shows a preview with ingredients and a truncated instruction. Clicking opens a full modal. Recipes can be removed from the card or the modal.
+Grid of all saved recipes. Each card shows a preview with ingredients. Clicking opens a full modal that includes:
+- Full ingredients and instructions
+- **Star rating** (1–5) with an animated star burst effect on click
+- **Comments section** — add comments, like/dislike others
+
+### AdminPage
+Only accessible to users with `role: "admin"`. Includes:
+- **Statistics**: total users, pantry items, saved recipes, comments, average recipe rating
+- **Top 5 tables**: top-rated recipes, most-commented recipes, most active users
+- **User management**: view all users, change role, delete, view their pantry and recipes
+- Admin cannot modify or delete their own account
 
 ---
 
 ## Components
 
 ### Navbar
-Sticky top bar with logo on the left and nav links on the right. Shows login/register for guests and account info + logout for authenticated users. Fully responsive with a hamburger menu on mobile.
+Sticky top bar with logo and nav links. Shows login/register for guests and account info + logout for authenticated users. Fully responsive with a hamburger menu on mobile.
 
 ### Footer
 Minimal footer with logo and copyright.
 
 ### AuthLayout
-Two-column layout for login/register pages:
-- **Left panel (desktop):** Dark teal gradient with floating food emoji decorations and tagline.
-- **Right panel:** White form area with eyebrow label, title, subtitle, form, and alternate link.
+Two-column layout for login/register pages with a decorative left panel and form on the right.
 
 ### AuthForm
-Reusable form renderer. Accepts a `fields` array and renders inputs with per-field error messages, a general error block, and a submit button with loading state.
+Reusable form renderer. Accepts a `fields` array and renders inputs with per-field error messages and a submit button with loading state.
 
 ### ProtectedRoute
 Wraps routes that require authentication. Shows a spinner while bootstrapping, redirects to `/login` if unauthenticated.
+
+### CommentsSection
+Displays comments for a recipe identified by its `recipeSignature`. Features:
+- Public viewing (no login needed to read)
+- Add comment form for logged-in users, login prompt for guests
+- ♥ Like and 💔 Dislike buttons with mutual exclusion (liking removes dislike and vice versa)
+- Live count updates
 
 ---
 
@@ -181,21 +204,17 @@ Wraps routes that require authentication. Shows a spinner while bootstrapping, r
 ```js
 const { user, token, isAuthenticated, isBootstrapping, login, register, logout } = useAuth()
 ```
-Reads from `AuthContext`. Provides auth state and actions.
 
 ### useToast
 ```js
-const { showToast, dismissToast } = useToast()
-
+const { showToast } = useToast()
 showToast({ type: "success" | "error" | "info", title: "...", message: "..." })
 ```
-Reads from `ToastContext`. Toasts auto-dismiss after 3.2 seconds, max 3 visible at once.
+Toasts auto-dismiss after 3.2 seconds, max 3 visible at once.
 
 ---
 
 ## Services
-
-All services read the base URL from `VITE_API_URL` and include structured error handling. Protected services require a `token` argument and attach `Authorization: Bearer <token>`.
 
 ### authService
 ```js
@@ -210,15 +229,24 @@ getPantryItems(token)             // GET    /pantry
 createPantryItem(token, data)     // POST   /pantry
 updatePantryItem(token, id, data) // PATCH  /pantry/:id
 deletePantryItem(token, id)       // DELETE /pantry/:id
-identifyPantryImage(token, file)  // POST   /pantry/identify-image  (FormData)
+identifyPantryImage(token, file)  // POST   /pantry/identify-image
 ```
 
 ### savedRecipesService
 ```js
-saveRecipe(token, recipe)         // POST   /saved-recipes
-getSavedRecipes(token)            // GET    /saved-recipes
-deleteSavedRecipe(token, id)      // DELETE /saved-recipes/:id
-checkRecipeSaved(token, recipe)   // POST   /saved-recipes/check → { isSaved, savedRecipeId }
+saveRecipe(token, recipe)             // POST   /saved-recipes
+getSavedRecipes(token)                // GET    /saved-recipes
+removeSavedRecipe(token, id)          // DELETE /saved-recipes/:id
+rateRecipe(token, id, rating)         // PATCH  /saved-recipes/:id/rating
+getTopRatedRecipes()                  // GET    /saved-recipes/top-rated (public)
+```
+
+### commentService
+```js
+getComments(signature)                // GET   /comments/:signature (public)
+addComment(token, signature, text)    // POST  /comments/:signature
+toggleLike(token, commentId)          // PATCH /comments/:id/like
+toggleDislike(token, commentId)       // PATCH /comments/:id/dislike
 ```
 
 ---
@@ -238,8 +266,6 @@ checkRecipeSaved(token, recipe)   // POST   /saved-recipes/check → { isSaved, 
 ### Fonts
 - **Playfair Display** (700) — headings
 - **DM Sans** (400/500) — body text
-
-Both loaded from Google Fonts in `index.css`.
 
 ### Custom Utility Classes
 
@@ -262,6 +288,7 @@ Both loaded from Google Fonts in `index.css`.
 | `save-pop` | Heart icon save animation |
 | `modal-pop` | Modal entrance |
 | `shimmer` | Loading skeleton shimmer |
+| `starfly` | Star burst particles on recipe rating (injected via JS) |
 
 ---
 
@@ -282,20 +309,4 @@ Logout
   → removes token from localStorage
   → clears user in context
   → redirects to /
-
-Protected request
-  → service attaches Authorization: Bearer <token>
-  → 401 response → triggers logout
 ```
-
----
-
-## Adding a New Page
-
-1. Create `src/Pages/MyPage.jsx`
-2. Add the route in `src/App.jsx`:
-```jsx
-<Route path="/my-page" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
-```
-3. If it needs API calls, add a function to the relevant service file.
-4. Add a nav link in `Navbar.jsx` if needed.

@@ -4,15 +4,18 @@
 
 CookSmart is a smart cooking assistant web app that helps users decide what to cook based on the ingredients they already have at home. Users manage a personal pantry, and the app uses AI to generate personalized recipe suggestions that match their available ingredients and dietary preferences.
 
-This repository contains the **backend** — a REST API that handles authentication, pantry management, recipe generation via Google Gemini AI, and image recognition via Cloudinary.
+This repository contains the **backend** — a REST API that handles authentication, pantry management, recipe generation via Google Gemini AI, image recognition, recipe ratings, comments, and admin analytics.
 
 **Key features:**
 - JWT-based user authentication and registration
 - Full CRUD pantry management with automatic ingredient merging
 - AI recipe generation using Google Gemini (based on pantry + user preferences)
-- AI ingredient identification from uploaded images
+- AI ingredient identification from uploaded images (non-food items filtered out)
 - Saved recipes with SHA256-based deduplication
-- Rate limiting on AI endpoints to prevent abuse
+- Recipe ratings (1–5 stars) with top-rated public endpoint
+- Comments on recipes with like / dislike (mutual exclusion)
+- Admin dashboard: statistics, user management, pantry viewer
+- Rate limiting, CORS whitelist, and Helmet.js security headers
 
 > The frontend lives in `../frontend`. See `frontend/README.md` for the client documentation.
 
@@ -28,6 +31,7 @@ This repository contains the **backend** — a REST API that handles authenticat
 | Google Gemini API | Image recognition + Recipe generation |
 | Cloudinary | Image hosting |
 | Multer | File upload handling |
+| Helmet.js | HTTP security headers |
 | express-rate-limit | Request rate limiting |
 
 ---
@@ -49,7 +53,7 @@ Create a `.env` file in the `backend/` directory:
 
 ```env
 PORT=5000
-MONGO_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/cooksmart
+MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/cooksmart
 
 JWT_SECRET=your_very_long_random_secret_here
 JWT_EXPIRES_IN=7d
@@ -64,8 +68,6 @@ CLOUDINARY_API_KEY=your_cloudinary_api_key
 CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 ```
 
-> A `.env.example` file is already included in the project as a reference.
-
 ---
 
 ## Project Structure
@@ -73,32 +75,37 @@ CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 ```
 backend/
 ├── server.js              # Entry point – connects to MongoDB, starts server
-├── app.js                 # Express setup – routes, middleware, CORS
+├── app.js                 # Express setup – routes, middleware, CORS, Helmet
 ├── models/
 │   ├── User.js
 │   ├── UserPreference.js
 │   ├── PantryItem.js
-│   └── SavedRecipe.js
+│   ├── SavedRecipe.js     # includes rating field
+│   └── Comment.js         # recipe comments with likes/dislikes
 ├── routes/
 │   ├── authRoutes.js
 │   ├── pantryRoutes.js
 │   ├── preferencesRoutes.js
 │   ├── recipeRoutes.js
-│   └── savedRecipesRoutes.js
+│   ├── savedRecipeRoutes.js
+│   ├── commentRoutes.js
+│   └── adminRoutes.js
 ├── middleware/
 │   ├── authMiddleware.js  # JWT verification
 │   └── errorMiddleware.js # Global error handling
 └── utils/
     ├── generateToken.js
     ├── geminiRecipeService.js
-    └── geminiImageService.js
+    ├── geminiImageService.js
+    └── cloudinaryService.js
 ```
 
 ---
 
 ## API Routes
 
-> All routes marked with 🔒 require `Authorization: Bearer <token>` header.
+> 🔒 = requires `Authorization: Bearer <token>` header
+> 👑 = requires Admin role
 
 ### Auth — `/auth`
 
@@ -108,53 +115,19 @@ backend/
 | `POST` | `/auth/login` | Login and receive JWT |
 | `GET` | `/auth/me` 🔒 | Get current user info |
 
-**Register request body:**
-```json
-{
-  "name": "John",
-  "email": "john@example.com",
-  "password": "mypassword123"
-}
-```
-
-**Response:**
-```json
-{
-  "token": "eyJhbGci...",
-  "user": { "_id": "...", "name": "John", "email": "john@example.com" }
-}
-```
-
 ---
 
 ### Pantry — `/pantry` 🔒
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/pantry` | Get all pantry items for the user |
-| `POST` | `/pantry` | Add a new item (auto-merges if duplicate) |
+| `GET` | `/pantry` | Get all pantry items |
+| `POST` | `/pantry` | Add a new item (auto-merges duplicates) |
 | `PATCH` | `/pantry/:id` | Update a pantry item |
 | `DELETE` | `/pantry/:id` | Delete a pantry item |
-| `POST` | `/pantry/identify-image` | Identify ingredient from image using Gemini AI |
+| `POST` | `/pantry/identify-image` | Identify ingredient from image (Gemini AI) |
 
-**Add item request body:**
-```json
-{
-  "ingredientName": "Tomatoes",
-  "quantity": "5",
-  "unit": "pcs",
-  "expiryDate": "2025-12-31"
-}
-```
-
-> **Note:** If the same ingredient with the same unit already exists, the quantity is automatically merged.
-
-**Image identification:**
-```
-POST /pantry/identify-image
-Content-Type: multipart/form-data
-Body: { image: <file> }   (max 5MB)
-```
+> Non-food items (e.g. a bag, pen) are ignored by the AI.
 
 ---
 
@@ -165,56 +138,55 @@ Body: { image: <file> }   (max 5MB)
 | `GET` | `/preferences` | Get user dietary preferences |
 | `PUT` | `/preferences` | Save or update preferences |
 
-**Request body:**
-```json
-{
-  "likedCuisines": ["Italian", "Asian"],
-  "dietaryRestrictions": ["Gluten-free"],
-  "favoriteFoodTypes": ["Pasta", "Salads"],
-  "preferredCookingTime": "under_30"
-}
-```
-
-`preferredCookingTime` options: `"under_30"` | `"under_60"` | `"any"`
-
 ---
 
 ### Recipes — `/recipes` 🔒
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/recipes/generate` | Generate a recipe based on pantry and preferences |
+| `POST` | `/recipes/generate` | Generate recipe via Gemini AI |
 
-Gemini AI receives the user's pantry items and preferences, and returns a full recipe with bonus recipes.
-
-**Response:**
-```json
-{
-  "title": "Tomato Pasta",
-  "ingredients": ["pasta", "tomatoes", "garlic"],
-  "instructions": "...",
-  "bonusRecipes": [
-    {
-      "title": "Quick Sauce",
-      "missingIngredients": ["basil"],
-      "content": "..."
-    }
-  ]
-}
-```
+Returns a main recipe + 2 bonus recipes with missing ingredient lists.
 
 ---
 
-### Saved Recipes — `/saved-recipes` 🔒
+### Saved Recipes — `/saved-recipes`
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/saved-recipes` | Get all saved recipes |
-| `POST` | `/saved-recipes` | Save a recipe |
-| `POST` | `/saved-recipes/check` | Check if a recipe is already saved |
-| `DELETE` | `/saved-recipes/:id` | Delete a saved recipe |
+| `GET` | `/saved-recipes/top-rated` | Top-rated recipes (public, no auth) |
+| `GET` | `/saved-recipes` 🔒 | Get all saved recipes |
+| `POST` | `/saved-recipes` 🔒 | Save a recipe |
+| `DELETE` | `/saved-recipes/:id` 🔒 | Delete a saved recipe |
+| `PATCH` | `/saved-recipes/:id/rating` 🔒 | Rate a recipe (1–5) |
 
-> Duplicate prevention: each recipe gets a SHA256 signature. Saving the same recipe twice is automatically blocked.
+> `top-rated` uses a MongoDB aggregation to compute average rating per `recipeSignature`, sorted descending.
+
+---
+
+### Comments — `/comments`
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/comments/:signature` | Get comments for a recipe (public) |
+| `POST` | `/comments/:signature` 🔒 | Add a comment |
+| `PATCH` | `/comments/:id/like` 🔒 | Toggle like (removes dislike if set) |
+| `PATCH` | `/comments/:id/dislike` 🔒 | Toggle dislike (removes like if set) |
+
+---
+
+### Admin — `/admin` 🔒 👑
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/admin/stats` | Full stats (users, pantry, recipes, comments, avg rating, top lists) |
+| `GET` | `/admin/users` | All users |
+| `PATCH` | `/admin/users/:id/role` | Change user role |
+| `DELETE` | `/admin/users/:id` | Delete a user |
+| `GET` | `/admin/users/:id/saved-recipes` | User's saved recipes |
+| `GET` | `/admin/users/:id/pantry` | User's pantry items |
+
+> Admin cannot change or delete their own account.
 
 ---
 
@@ -226,27 +198,27 @@ Gemini AI receives the user's pantry items and preferences, and returns a full r
   name:      String,   // 2–80 characters
   email:     String,   // unique
   password:  String,   // bcrypt hashed (12 rounds)
-  createdAt, updatedAt
+  role:      "user" | "admin"
 }
 ```
 
 ### PantryItem
 ```js
 {
-  userId:         ObjectId,  // ref: User
+  userId:         ObjectId,
   ingredientName: String,
   quantity:       String,
   unit:           String,
   expiryDate:     Date,
   imageUrl:       String,    // Cloudinary URL
-  createdAt, updatedAt
+  imagePublicId:  String
 }
 ```
 
 ### UserPreference
 ```js
 {
-  userId:                ObjectId,  // ref: User (unique)
+  userId:                ObjectId,
   likedCuisines:         [String],
   dietaryRestrictions:   [String],
   dislikedIngredients:   [String],
@@ -258,36 +230,40 @@ Gemini AI receives the user's pantry items and preferences, and returns a full r
 ### SavedRecipe
 ```js
 {
-  userId:          ObjectId,  // ref: User
+  userId:          ObjectId,
   recipeSignature: String,    // SHA256 hash for deduplication
   title:           String,
   ingredients:     [String],
   instructions:    String,
-  bonusRecipes: [{
-    title:              String,
-    missingIngredients: [String],
-    content:            String
-  }]
+  rating:          Number,    // 1–5, nullable
+  bonusRecipes:    [{ title, missingIngredients, content }]
+}
+```
+
+### Comment
+```js
+{
+  recipeSignature: String,    // links comment to a recipe
+  userId:          ObjectId,
+  userName:        String,
+  text:            String,    // max 500 characters
+  likes:           [ObjectId],
+  dislikes:        [ObjectId]
 }
 ```
 
 ---
 
-## Authentication Flow
+## Security
 
-```
-Client  →  POST /auth/login  →  { token: "eyJ..." }
-
-Client  →  GET /pantry
-           Headers: Authorization: Bearer eyJ...
-           → authMiddleware decodes the token
-           → req.user = { _id, name, email }
-           → handler runs
-```
-
-- Tokens are signed with `JWT_SECRET`, default expiry **7 days**
-- Passwords are hashed with **bcrypt (12 rounds)**
-- Expired or invalid tokens return `401 Unauthorized`
+- **JWT** — 7-day token expiry
+- **bcrypt** — 12 salt rounds
+- **Helmet.js** — sets secure HTTP headers
+- **CORS** — explicit origin whitelist
+- **Rate limiting** — `/auth` (10 req/min), `/recipes/generate` (15 req/min)
+- **Data isolation** — every query filtered by `userId`
+- **Regex injection prevention** — user input is escaped before use in RegExp
+- **Admin self-protection** — admin cannot delete or demote themselves
 
 ---
 
@@ -296,35 +272,12 @@ Client  →  GET /pantry
 | Endpoint | Limit |
 |---|---|
 | `/auth/*` | 10 requests / minute |
-| `/pantry/identify-image` | 5 requests / minute |
 | `/recipes/generate` | 15 requests / minute |
-
----
-
-## CORS
-
-Allowed origins:
-- `http://localhost:5173`
-- `http://localhost:5174`
-- Value of `FRONTEND_URL` in environment
 
 ---
 
 ## Health Check
 
 ```
-GET /   →   200 OK  →  { "message": "CookSmart API is running" }
-```
-
----
-
-## Full Request Flow (Frontend → Backend)
-
-```
-1. Register:      POST /auth/register        →  Save to MongoDB + return JWT
-2. Login:         POST /auth/login           →  Return JWT
-3. Add to pantry: POST /pantry              →  Save ingredient
-4. Image scan:    POST /pantry/identify-image  →  Gemini → Cloudinary → PantryItem
-5. Get recipe:    POST /recipes/generate    →  Gemini (pantry + prefs) → Recipe
-6. Save recipe:   POST /saved-recipes       →  SHA256 dedup → SavedRecipe
+GET /   →   200 OK  →  { "message": "CookSmart auth API is running" }
 ```
