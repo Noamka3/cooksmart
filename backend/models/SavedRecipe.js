@@ -49,6 +49,12 @@ const savedRecipeSchema = new mongoose.Schema(
       default: null,
       trim: true,
     },
+    rating: {
+      type: Number,
+      min: 1,
+      max: 5,
+      default: null,
+    },
     bonusRecipes: {
       type: [
         {

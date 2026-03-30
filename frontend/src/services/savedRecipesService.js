@@ -42,3 +42,16 @@ export const checkSavedRecipe = (token, recipe) =>
     method: "POST",
     body: JSON.stringify(recipe),
   });
+
+export const rateRecipe = (token, savedRecipeId, rating) =>
+  buildAuthorizedRequest(`/saved-recipes/${savedRecipeId}/rating`, token, {
+    method: "PATCH",
+    body: JSON.stringify({ rating }),
+  });
+
+export const getTopRatedRecipes = async () => {
+  const response = await fetch(`${API_URL}/saved-recipes/top-rated`);
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.message || "Failed to fetch");
+  return data;
+};

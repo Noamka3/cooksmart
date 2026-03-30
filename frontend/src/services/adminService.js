@@ -46,3 +46,6 @@ export const deleteUser = (token, userId) =>
 
 export const getUserSavedRecipes = (token, userId) =>
   buildAdminRequest(`/admin/users/${userId}/saved-recipes`, token, { method: "GET" });
+
+export const getUserPantry = (token, userId) =>
+  buildAdminRequest(`/admin/users/${userId}/pantry`, token, { method: "GET" });

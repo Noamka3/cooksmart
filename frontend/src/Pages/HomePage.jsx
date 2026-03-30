@@ -1,7 +1,10 @@
+import { useEffect, useRef, useState } from "react";
 import logo from "../assets/logo.png";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import { useAuth } from "../hooks/useAuth";
+import CommentsSection from "../components/CommentsSection";
+import { getTopRatedRecipes } from "../services/savedRecipesService";
 
 const teal    = "#2E7273";
 const gold    = "#D08A2A";
@@ -167,6 +170,180 @@ function Features() {
   );
 }
 
+function RecipeModal({ recipe, onClose }) {
+  useEffect(() => {
+    if (!recipe) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = prev; window.removeEventListener("keydown", onKey); };
+  }, [recipe, onClose]);
+
+  if (!recipe) return null;
+  const stars = Math.round(recipe.avgRating);
+  const text = (recipe.instructions || "").replace(/\\n/g, "\n");
+  const byNewline = text.split(/\n+/).filter((s) => s.trim());
+  const steps = byNewline.length > 1
+    ? byNewline
+    : text.split(/(?=\d+\.\s)/).filter((s) => s.trim());
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
+      <div
+        className="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col"
+        dir="rtl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-6 py-5 border-b border-slate-100" style={{ background: "linear-gradient(135deg,#fffaf4,#f0faf8)" }}>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-1 mb-2">
+                {[1,2,3,4,5].map((s) => (
+                  <span key={s} style={{ color: s <= stars ? "#D08A2A" : "#d1d5db", fontSize: "1.1rem" }}>★</span>
+                ))}
+                <span className="text-xs mr-1" style={{ color: "#8a9e98" }}>({recipe.ratingCount} דירוגים)</span>
+              </div>
+              <h2 className="text-2xl font-bold" style={{ fontFamily: "'Playfair Display', serif", color: "#1a2e2b" }}>
+                {recipe.title}
+              </h2>
+            </div>
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl leading-none mt-1">✕</button>
+          </div>
+        </div>
+
+        <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
+          {recipe.ingredients?.length > 0 && (
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: teal }}>מרכיבים</p>
+              <div className="flex flex-wrap gap-2">
+                {recipe.ingredients.map((ing, i) => (
+                  <span key={i} className="rounded-full px-3 py-1 text-sm" style={{ background: "#f9fbfa", color: "#355650", border: "1px solid #e3edea" }}>
+                    {ing}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {recipe.instructions && (
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: teal }}>הוראות הכנה</p>
+              <div className="space-y-2 rounded-2xl p-4" style={{ background: "#fffdf9", border: "1px solid #edf3f0" }}>
+                {steps.map((step, i) => {
+                  const match = step.trim().match(/^(\d+)\.\s*(.*)/s);
+                  if (match) return (
+                    <div key={i} className="flex gap-3 items-start">
+                      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" style={{ background: teal }}>{match[1]}</span>
+                      <p className="text-sm leading-7" style={{ color: "#4f6c66" }}>{match[2]}</p>
+                    </div>
+                  );
+                  return <p key={i} className="text-sm leading-7" style={{ color: "#4f6c66" }}>{step.trim()}</p>;
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="px-6 py-4 border-t border-slate-100">
+          <CommentsSection signature={recipe._id} />
+          <div className="flex justify-end mt-4">
+            <button onClick={onClose} className="px-5 py-2 rounded-xl text-sm font-semibold" style={{ background: "#f7fbfa", color: teal, border: "1px solid #dbeae5" }}>
+              סגור
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TopRatedCarousel() {
+  const [recipes, setRecipes] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    getTopRatedRecipes()
+      .then((d) => setRecipes(d.topRated || []))
+      .catch(() => {});
+  }, []);
+
+  if (recipes.length === 0) return null;
+
+  const scroll = (dir) => {
+    if (scrollRef.current) scrollRef.current.scrollBy({ left: dir * 280, behavior: "smooth" });
+  };
+
+  return (
+    <section className="py-20 px-6" style={{ background: "white" }}>
+      <div className="max-w-5xl mx-auto">
+        <p className="text-center uppercase tracking-widest mb-2 text-xs font-bold" style={{ color: gold }}>
+          ⭐ הכי אהובים
+        </p>
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-10"
+          style={{ fontFamily: "'Playfair Display', serif", color: "#1a2e2b" }}>
+          מתכונים מומלצים
+        </h2>
+
+        <div className="relative">
+          <button
+            onClick={() => scroll(1)}
+            className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full shadow-md flex items-center justify-center text-lg transition hover:scale-110"
+            style={{ background: "white", border: `1px solid #e8f0ef`, color: teal }}
+          >
+            ›
+          </button>
+          <button
+            onClick={() => scroll(-1)}
+            className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full shadow-md flex items-center justify-center text-lg transition hover:scale-110"
+            style={{ background: "white", border: `1px solid #e8f0ef`, color: teal }}
+          >
+            ‹
+          </button>
+
+          <div
+            ref={scrollRef}
+            className="flex gap-4 overflow-x-auto pb-2 scroll-smooth"
+            style={{ scrollbarWidth: "none" }}
+            dir="rtl"
+          >
+            {recipes.map((recipe) => {
+              const stars = Math.round(recipe.avgRating);
+              return (
+                <div
+                  key={recipe._id}
+                  onClick={() => setSelected(recipe)}
+                  className="flex-shrink-0 w-64 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all hover:-translate-y-1 cursor-pointer"
+                  style={{ background: cream, border: "1px solid #e8f0ef", minHeight: "160px" }}
+                >
+                  <div className="flex items-center gap-1 mb-3">
+                    {[1,2,3,4,5].map((s) => (
+                      <span key={s} style={{ color: s <= stars ? "#D08A2A" : "#d1d5db", fontSize: "1rem" }}>★</span>
+                    ))}
+                    <span className="text-xs mr-1" style={{ color: "#8a9e98" }}>({recipe.ratingCount})</span>
+                  </div>
+                  <h3 className="font-bold text-base mb-2 leading-tight" style={{ color: "#1a2e2b" }}>
+                    {recipe.title}
+                  </h3>
+                  {recipe.ingredients?.length > 0 && (
+                    <p className="text-xs leading-relaxed" style={{ color: "#5a7a75" }}>
+                      {recipe.ingredients.slice(0, 3).join(" · ")}
+                      {recipe.ingredients.length > 3 ? ` · +${recipe.ingredients.length - 3}` : ""}
+                    </p>
+                  )}
+                  <p className="text-xs mt-3 font-medium" style={{ color: teal }}>לחץ לצפייה במתכון ←</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+      <RecipeModal recipe={selected} onClose={() => setSelected(null)} />
+    </section>
+  );
+}
+
 function CTA() {
   const { isAuthenticated } = useAuth();
   return (
@@ -207,6 +384,7 @@ export default function HomePage() {
       <Hero />
       <HowItWorks />
       <Features />
+      <TopRatedCarousel />
       <CTA />
       <Footer />
     </>

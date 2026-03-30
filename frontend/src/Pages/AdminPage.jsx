@@ -5,7 +5,7 @@ import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
-import { deleteUser, getAdminStats, getAdminUsers, getUserSavedRecipes, updateUserRole } from "../services/adminService";
+import { deleteUser, getAdminStats, getAdminUsers, getUserPantry, getUserSavedRecipes, updateUserRole } from "../services/adminService";
 
 export default function AdminPage() {
   const { user, token } = useAuth();
@@ -17,6 +17,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [recipesModal, setRecipesModal] = useState(null); // { user, recipes, loading }
+  const [pantryModal, setPantryModal] = useState(null); // { user, items, loading }
 
   useEffect(() => {
     if (user && user.role !== "admin") {
@@ -68,6 +69,17 @@ export default function AdminPage() {
     }
   };
 
+  const handleViewPantry = async (targetUser) => {
+    setPantryModal({ user: targetUser, items: [], loading: true });
+    try {
+      const items = await getUserPantry(token, targetUser._id);
+      setPantryModal({ user: targetUser, items, loading: false });
+    } catch (err) {
+      showToast(err.message || "Failed to load pantry", "error");
+      setPantryModal(null);
+    }
+  };
+
   const handleViewRecipes = async (targetUser) => {
     setRecipesModal({ user: targetUser, recipes: [], loading: true });
     try {
@@ -111,11 +123,100 @@ export default function AdminPage() {
 
         {/* Stats */}
         {stats && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <StatCard label="משתמשים רשומים" value={stats.totalUsers} icon="👥" />
-            <StatCard label="פריטי מקרר" value={stats.totalPantryItems} icon="🧊" />
-            <StatCard label="מתכונים שמורים" value={stats.totalSavedRecipes} icon="📋" />
-          </div>
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+              <StatCard label="משתמשים" value={stats.totalUsers} icon="👥" />
+              <StatCard label="פריטי מקרר" value={stats.totalPantryItems} icon="🧊" />
+              <StatCard label="מתכונים שמורים" value={stats.totalSavedRecipes} icon="📋" />
+              <StatCard label="תגובות" value={stats.totalComments} icon="💬" />
+              <StatCard
+                label="ממוצע דירוג"
+                value={stats.avgRating ? `${stats.avgRating.toFixed(1)} ⭐` : "אין"}
+                icon="📊"
+                sub={stats.ratedRecipesCount ? `מתוך ${stats.ratedRecipesCount} דירוגים` : null}
+              />
+            </div>
+
+            {/* Analytics Tables */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Top Rated */}
+              <div className="bg-white/80 backdrop-blur rounded-2xl shadow-md border border-white/50 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+                  <span>⭐</span>
+                  <h2 className="font-bold text-slate-800">מתכונים מובילים</h2>
+                </div>
+                <ul className="divide-y divide-slate-50">
+                  {stats.topRatedRecipes?.length === 0 && (
+                    <li className="px-5 py-4 text-sm text-slate-400 text-center">אין עדיין דירוגים</li>
+                  )}
+                  {stats.topRatedRecipes?.map((r, i) => (
+                    <li key={r._id} className="px-5 py-3 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-xs font-bold text-slate-300 w-4">{i + 1}</span>
+                        <span className="text-sm font-medium text-slate-700 truncate">{r.title}</span>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className="text-sm font-bold text-amber-500">{r.avgRating.toFixed(1)}</span>
+                        <span className="text-amber-400">⭐</span>
+                        <span className="text-xs text-slate-400">({r.ratingCount})</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Most Commented */}
+              <div className="bg-white/80 backdrop-blur rounded-2xl shadow-md border border-white/50 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+                  <span>💬</span>
+                  <h2 className="font-bold text-slate-800">הכי מדוברים</h2>
+                </div>
+                <ul className="divide-y divide-slate-50">
+                  {stats.mostCommented?.length === 0 && (
+                    <li className="px-5 py-4 text-sm text-slate-400 text-center">אין עדיין תגובות</li>
+                  )}
+                  {stats.mostCommented?.map((r, i) => (
+                    <li key={r._id} className="px-5 py-3 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-xs font-bold text-slate-300 w-4">{i + 1}</span>
+                        <span className="text-sm font-medium text-slate-700 truncate">{r.title || "מתכון לא ידוע"}</span>
+                      </div>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0" style={{ background: "#f0faf8", color: "#2E7273" }}>
+                        {r.commentCount} תגובות
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Most Active Users */}
+              <div className="bg-white/80 backdrop-blur rounded-2xl shadow-md border border-white/50 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+                  <span>🏆</span>
+                  <h2 className="font-bold text-slate-800">משתמשים פעילים</h2>
+                </div>
+                <ul className="divide-y divide-slate-50">
+                  {stats.mostActiveUsers?.length === 0 && (
+                    <li className="px-5 py-4 text-sm text-slate-400 text-center">אין נתונים</li>
+                  )}
+                  {stats.mostActiveUsers?.map((u, i) => (
+                    <li key={u._id} className="px-5 py-3 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-xs font-bold text-slate-300 w-4">{i + 1}</span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-slate-700 truncate">{u.name}</p>
+                          <p className="text-xs text-slate-400 truncate">{u.email}</p>
+                        </div>
+                      </div>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0" style={{ background: "#fff8ef", color: "#a06a1d" }}>
+                        {u.count} מתכונים
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </>
         )}
 
         {/* Users Table */}
@@ -147,7 +248,7 @@ export default function AdminPage() {
                           {u.name.charAt(0).toUpperCase()}
                         </div>
                         <span className="font-medium text-slate-800">{u.name}</span>
-                        {u._id === user._id && (
+                        {u._id === user.id && (
                           <span className="text-xs bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full">אתה</span>
                         )}
                       </div>
@@ -168,12 +269,18 @@ export default function AdminPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2 flex-wrap">
                         <button
+                          onClick={() => handleViewPantry(u)}
+                          className="text-xs px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 transition-colors"
+                        >
+                          🧊 מקרר
+                        </button>
+                        <button
                           onClick={() => handleViewRecipes(u)}
                           className="text-xs px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 transition-colors"
                         >
                           📋 מתכונים
                         </button>
-                        {u._id !== user._id && (
+                        {u._id !== user.id && (
                           <>
                             <button
                               onClick={() => handleRoleToggle(u._id, u.role)}
@@ -247,6 +354,63 @@ export default function AdminPage() {
 
             <div className="px-6 py-3 border-t border-slate-100 text-xs text-slate-400 text-center">
               {!recipesModal.loading && `${recipesModal.recipes.length} מתכונים`}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pantry Modal */}
+      {pantryModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          onClick={() => setPantryModal(null)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col"
+            dir="rtl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <div>
+                <h3 className="text-lg font-bold text-slate-800">
+                  מקרר של {pantryModal.user.name}
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">{pantryModal.user.email}</p>
+              </div>
+              <button
+                onClick={() => setPantryModal(null)}
+                className="text-slate-400 hover:text-slate-600 text-xl leading-none"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="overflow-y-auto flex-1 px-6 py-4">
+              {pantryModal.loading ? (
+                <div className="flex justify-center py-12">
+                  <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#2E7273]/20 border-t-[#2E7273]" />
+                </div>
+              ) : pantryModal.items.length === 0 ? (
+                <p className="text-center text-slate-500 py-12">המקרר ריק</p>
+              ) : (
+                <ul className="space-y-2">
+                  {pantryModal.items.map((item) => (
+                    <li key={item._id} className="flex items-center justify-between border border-slate-100 rounded-xl px-4 py-3">
+                      <span className="font-medium text-slate-800 text-sm">{item.ingredientName}</span>
+                      <div className="flex gap-2 text-xs text-slate-500">
+                        {item.quantity && <span>{item.quantity} {item.unit || ""}</span>}
+                        {item.expiryDate && (
+                          <span className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">
+                            תפוגה: {new Date(item.expiryDate).toLocaleDateString("he-IL")}
+                          </span>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div className="px-6 py-3 border-t border-slate-100 text-xs text-slate-400 text-center">
+              {!pantryModal.loading && `${pantryModal.items.length} פריטים`}
             </div>
           </div>
         </div>
@@ -332,13 +496,14 @@ function RecipeRow({ recipe }) {
   );
 }
 
-function StatCard({ label, value, icon }) {
+function StatCard({ label, value, icon, sub }) {
   return (
     <div className="bg-white/80 backdrop-blur rounded-2xl shadow-md border border-white/50 p-5 flex items-center gap-4">
       <div className="text-3xl">{icon}</div>
       <div>
         <p className="text-2xl font-bold text-slate-800">{value}</p>
         <p className="text-sm text-slate-500">{label}</p>
+        {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
       </div>
     </div>
   );

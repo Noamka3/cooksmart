@@ -120,9 +120,58 @@ const checkSavedRecipe = async (req, res, next) => {
   }
 };
 
+const rateRecipe = async (req, res, next) => {
+  try {
+    const { rating } = req.body;
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ message: "Rating must be between 1 and 5" });
+    }
+
+    const savedRecipe = await SavedRecipe.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user._id },
+      { rating: Math.round(rating) },
+      { new: true },
+    );
+
+    if (!savedRecipe) {
+      return res.status(404).json({ message: "Saved recipe not found" });
+    }
+
+    return res.json({ savedRecipe });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getTopRated = async (req, res, next) => {
+  try {
+    const top = await SavedRecipe.aggregate([
+      { $match: { rating: { $ne: null } } },
+      {
+        $group: {
+          _id: "$recipeSignature",
+          title: { $first: "$title" },
+          ingredients: { $first: "$ingredients" },
+          instructions: { $first: "$instructions" },
+          avgRating: { $avg: "$rating" },
+          ratingCount: { $sum: 1 },
+        },
+      },
+      { $sort: { avgRating: -1, ratingCount: -1 } },
+      { $limit: 8 },
+    ]);
+
+    return res.json({ topRated: top });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   saveRecipe,
   getSavedRecipes,
   removeSavedRecipe,
   checkSavedRecipe,
+  rateRecipe,
+  getTopRated,
 };

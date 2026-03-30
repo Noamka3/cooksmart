@@ -1,16 +1,100 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import CommentsSection from "../components/CommentsSection";
 
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
-import { getSavedRecipes, removeSavedRecipe } from "../services/savedRecipesService";
+import { getSavedRecipes, rateRecipe, removeSavedRecipe } from "../services/savedRecipesService";
 
 const teal = "#1a9c8a";
 const gold = "#c9a84c";
 const cream = "#f5ead0";
 
+
+// inject burst keyframe once
+if (typeof document !== "undefined" && !document.getElementById("star-burst-style")) {
+  const s = document.createElement("style");
+  s.id = "star-burst-style";
+  s.textContent = `
+    @keyframes starfly {
+      0%   { transform: translate(0,0) scale(1.4); opacity: 1; }
+      100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+    }
+    @keyframes starfade {
+      0%   { opacity: 1; transform: scale(1.5); }
+      100% { opacity: 0; transform: scale(0.5); }
+    }
+  `;
+  document.head.appendChild(s);
+}
+
+function StarBurst({ x, y, onDone }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 900);
+    return () => clearTimeout(t);
+  }, [onDone]);
+
+  return (
+    <div style={{ position: "fixed", left: x, top: y, pointerEvents: "none", zIndex: 9999 }}>
+      {Array.from({ length: 10 }, (_, i) => {
+        const angle = (i / 10) * 360;
+        const dist = 35 + Math.random() * 25;
+        return (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              fontSize: `${0.8 + Math.random() * 0.8}rem`,
+              color: i % 2 === 0 ? "#D08A2A" : "#f5c842",
+              animation: `starfly ${0.6 + Math.random() * 0.3}s ease-out ${i * 40}ms forwards`,
+              "--dx": `${Math.cos((angle * Math.PI) / 180) * dist}px`,
+              "--dy": `${Math.sin((angle * Math.PI) / 180) * dist}px`,
+            }}
+          >
+            ★
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function StarRating({ value, onChange, size = "text-lg" }) {
+  const [hovered, setHovered] = useState(null);
+  const [burst, setBurst] = useState(null);
+  const display = hovered ?? value ?? 0;
+
+  const handleClick = (star, e) => {
+    if (!onChange) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setBurst({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, id: Date.now() });
+    onChange(star);
+  };
+
+  return (
+    <>
+      {burst && <StarBurst key={burst.id} x={burst.x} y={burst.y} onDone={() => setBurst(null)} />}
+      <div className="flex gap-0.5" onClick={(e) => e.stopPropagation()}>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            className={`${size} transition-transform hover:scale-125 leading-none`}
+            style={{ color: star <= display ? "#D08A2A" : "#d1d5db", background: "none", border: "none", padding: 0, cursor: onChange ? "pointer" : "default" }}
+            onMouseEnter={() => onChange && setHovered(star)}
+            onMouseLeave={() => onChange && setHovered(null)}
+            onClick={(e) => handleClick(star, e)}
+            aria-label={`דרג ${star} כוכבים`}
+          >
+            ★
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
 
 function RecipeSparkIcon() {
   return (
@@ -21,7 +105,7 @@ function RecipeSparkIcon() {
   );
 }
 
-function FullRecipeModal({ recipe, removingId, onClose, onRemove }) {
+function FullRecipeModal({ recipe, removingId, onClose, onRemove, onRate }) {
   useEffect(() => {
     if (!recipe) {
       return undefined;
@@ -191,7 +275,10 @@ function FullRecipeModal({ recipe, removingId, onClose, onRemove }) {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t px-5 py-4 sm:px-7" style={{ borderColor: "#edf3f0", background: "#fcfdfa" }}>
+        <div className="border-t px-5 py-4 sm:px-7 space-y-4" style={{ borderColor: "#edf3f0", background: "#fcfdfa" }}>
+          <CommentsSection signature={recipe.recipeSignature} />
+          <div className="flex flex-wrap items-center justify-between gap-3">
+          <StarRating value={recipe.rating} onChange={(r) => onRate(recipe._id, r)} size="text-2xl" />
           <button
             type="button"
             onClick={() => onRemove(recipe._id, recipe.title)}
@@ -211,6 +298,7 @@ function FullRecipeModal({ recipe, removingId, onClose, onRemove }) {
           >
             סגור
           </button>
+          </div>
         </div>
       </div>
     </div>
@@ -247,6 +335,16 @@ export default function SavedRecipesPage() {
 
     fetchSavedRecipes();
   }, [showToast, token]);
+
+  const handleRate = async (savedRecipeId, rating) => {
+    try {
+      const { savedRecipe } = await rateRecipe(token, savedRecipeId, rating);
+      setSavedRecipes((prev) => prev.map((r) => (r._id === savedRecipeId ? { ...r, rating: savedRecipe.rating } : r)));
+      setSelectedRecipe((prev) => (prev?._id === savedRecipeId ? { ...prev, rating: savedRecipe.rating } : prev));
+    } catch (err) {
+      showToast({ type: "error", title: "שגיאה", message: err.message || "לא הצלחתי לשמור את הדירוג" });
+    }
+  };
 
   const handleRemove = async (savedRecipeId, title) => {
     try {
@@ -404,6 +502,7 @@ export default function SavedRecipesPage() {
                         </div>
 
                         <div className="flex items-center gap-3 shrink-0">
+                          <StarRating value={recipe.rating} onChange={(r) => handleRate(recipe._id, r)} size="text-base" />
                           <span className="text-xs hidden sm:block" style={{ color: "#a0b8b4" }}>
                             {new Date(recipe.createdAt).toLocaleDateString("he-IL")}
                           </span>
@@ -472,6 +571,7 @@ export default function SavedRecipesPage() {
         removingId={removingId}
         onClose={() => setSelectedRecipe(null)}
         onRemove={handleRemove}
+        onRate={handleRate}
       />
     </>
   );
