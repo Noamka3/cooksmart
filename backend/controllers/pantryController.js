@@ -31,7 +31,7 @@ const addItem = async (req, res, next) => {
 
     const existing = await PantryItem.findOne({
       userId: req.user._id,
-      ingredientName: { $regex: new RegExp(`^${normalizedName}$`, "i") },
+      ingredientName: { $regex: new RegExp(`^${normalizedName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
     });
 
     if (existing) {

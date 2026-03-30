@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 
 const authRoutes = require("./routes/authRoutes");
@@ -12,6 +13,7 @@ const adminRoutes = require("./routes/adminRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 
 const app = express();
+app.use(helmet());
 
 const allowedOrigins = [
   process.env.FRONTEND_URL,
