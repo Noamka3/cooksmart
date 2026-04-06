@@ -10,16 +10,16 @@ export default function AuthForm({
   isSubmitting,
 }) {
   return (
-    <form style={{ display:"flex", flexDirection:"column", gap:0 }} onSubmit={onSubmit}>
-      <div style={{ display:"flex", flexDirection:"column", gap:16, marginBottom:20 }}>
+    <form style={{ display: "flex", flexDirection: "column", gap: 0 }} onSubmit={onSubmit}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 20 }}>
         {fields.map((field) => (
-          <label key={field.name} style={{ display:"block" }}>
+          <label key={field.name} style={{ display: "block" }}>
             <span
               style={{
-                display:"block", marginBottom:7,
-                fontSize:"0.82rem", fontWeight:600,
-                color:"rgba(250,250,249,0.7)",
-                letterSpacing:"0.03em",
+                display: "block", marginBottom: 7,
+                fontSize: "0.82rem", fontWeight: 600,
+                color: "rgba(250,250,249,0.7)",
+                letterSpacing: "0.03em",
               }}
             >
               {field.label}
@@ -34,7 +34,7 @@ export default function AuthForm({
               value={formData[field.name]}
             />
             {fieldErrors[field.name] && (
-              <span style={{ display:"block", marginTop:5, fontSize:"0.78rem", color:"#f87171" }}>
+              <span style={{ display: "block", marginTop: 5, fontSize: "0.78rem", color: "#f87171" }}>
                 {fieldErrors[field.name]}
               </span>
             )}
@@ -45,24 +45,20 @@ export default function AuthForm({
       {generalError && (
         <div
           style={{
-            marginBottom:16,
-            padding:"12px 16px",
-            borderRadius:10,
-            background:"rgba(239,68,68,0.08)",
-            border:"1px solid rgba(239,68,68,0.25)",
-            fontSize:"0.85rem",
-            color:"#fca5a5",
+            marginBottom: 16,
+            padding: "12px 16px",
+            borderRadius: 10,
+            background: "rgba(239,68,68,0.08)",
+            border: "1px solid rgba(239,68,68,0.25)",
+            fontSize: "0.85rem",
+            color: "#fca5a5",
           }}
         >
           {generalError}
         </div>
       )}
 
-      <button
-        className="auth-submit"
-        disabled={isSubmitting}
-        type="submit"
-      >
+      <button className="auth-submit" disabled={isSubmitting} type="submit">
         {isSubmitting ? loadingLabel : submitLabel}
       </button>
     </form>

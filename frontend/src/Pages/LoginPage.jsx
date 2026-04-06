@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 
-import AuthForm from "../components/AuthForm";
-import AuthLayout from "../components/AuthLayout";
+import AuthForm from "../components/auth/AuthForm";
+import AuthLayout from "../components/auth/AuthLayout";
 import { useAuth } from "../hooks/useAuth";
 import { validateLoginForm } from "../utils/authValidation";
 
@@ -61,6 +61,7 @@ export default function LoginPage() {
       alternateLink="/register"
       alternateText="חדש ב-CookSmart?"
       eyebrow="ברוך השב"
+      imgIndex={1}
       subtitle="היכנס כדי לקבל המלצות מתכונים מותאמות אישית ולנהל את המזווה שלך."
       title="כניסה לחשבון שלך"
     >

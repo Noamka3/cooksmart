@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 
-import AuthForm from "../components/AuthForm";
-import AuthLayout from "../components/AuthLayout";
+import AuthForm from "../components/auth/AuthForm";
+import AuthLayout from "../components/auth/AuthLayout";
 import { useAuth } from "../hooks/useAuth";
 import { validateRegisterForm } from "../utils/authValidation";
 
@@ -62,6 +62,7 @@ if (isAuthenticated) {
       alternateLink="/login"
       alternateText="כבר יש לך חשבון?"
       eyebrow="יצירת חשבון"
+      imgIndex={0}
       subtitle="צור פרופיל ותקבל המלצות מתכונים מותאמות אישית לפי מה שיש לך בבית."
       title="הצטרף ל-CookSmart"
     >
@@ -106,9 +107,6 @@ if (isAuthenticated) {
         submitLabel="הרשמה"
       />
 
-      <Link className="mt-5 inline-flex text-sm font-medium text-[#2E7273]" to="/">
-        חזרה לדף הראשי
-      </Link>
     </AuthLayout>
   );
 }
